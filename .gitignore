@@ -1,0 +1,6 @@
+*.swp
+*.txt
+bin/
+obj/
+Content/
+.vs
