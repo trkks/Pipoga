@@ -64,19 +64,21 @@ namespace Pipoga
             return v;
         }
 
-        public bool IsMouse1Down =>
-            mouseState.LeftButton == ButtonState.Pressed;
-        public bool IsMouse2Down =>
-            mouseState.RightButton == ButtonState.Pressed;
-
-        public bool WasMouse1Down => WasInputDown(
+        public MouseButtonState Mouse1State => new MouseButtonState(
+            mouseState.LeftButton == ButtonState.Pressed,
+            WasInputDown(
                 KEYS_ENUM_MAX,
                 mouseState.LeftButton == ButtonState.Pressed
-            );
-        public bool WasMouse2Down => WasInputDown(
+            )
+        );
+
+        public MouseButtonState Mouse2State => new MouseButtonState(
+            mouseState.RightButton == ButtonState.Pressed,
+            WasInputDown(
                 KEYS_ENUM_MAX + 1,
                 mouseState.RightButton == ButtonState.Pressed
-            );
+            )
+        );
 
         public Point MousePosition => this.mouseState.Position;
 
@@ -136,6 +138,18 @@ namespace Pipoga
         public bool IsKeyDown(Keys key)
         {
             return keyboardState.IsKeyDown(key);
+        }
+    }
+
+    public struct MouseButtonState
+    {
+        public readonly bool wasDown;
+        public readonly bool isDown;
+
+        public MouseButtonState(bool wasDown, bool isDown)
+        {
+            this.wasDown = wasDown;
+            this.isDown = isDown;
         }
     }
 }

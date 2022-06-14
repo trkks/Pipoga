@@ -14,6 +14,10 @@ namespace Pipoga
         public float Y => position.Y;
         public float W => size.X;
         public float H => size.Y;
+        public Vector2 TopLeft     => position;
+        public Vector2 TopRight    => position + new Vector2(W, 0);
+        public Vector2 BottomRight => position + size;
+        public Vector2 BottomLeft  => position + new Vector2(0, H);
 
         public RectangleBody(Vector2 position, Vector2 size)
         {

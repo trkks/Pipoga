@@ -18,6 +18,9 @@ namespace Pipoga.Examples
 
         PixelDisplay screen;
         List<Line> lines;
+        List<Button> buttons;
+        // Unordered collection of actions to run once during the simulation.
+        Queue<Action> primedActions;
 
         Point lineDrawStart;
         Line lineBeingDrawn;
@@ -44,6 +47,19 @@ namespace Pipoga.Examples
             input = new Input();
 
             lines = new List<Line>(0xff);
+            buttons = new List<Button> {
+                new Button(new Point(25, 25), new Point(50, 20)),
+                new Button(
+                    new Point(80, 40), new Point(40, 40),
+                    () => primedActions.Enqueue(
+                        () => buttons.Add(
+                            new Button(new Point(15, 7), new Point(50, 50))
+                        )
+                    ),
+                    Color.Pink, Color.Red
+                ),
+            };
+            primedActions = new Queue<Action>(0xff);
         }
 
         protected override void Initialize()
@@ -66,6 +82,15 @@ namespace Pipoga.Examples
 
         protected override void Update(GameTime gameTime)
         {
+            // Run the previously primed actions before anything else.
+            {
+                Action action;
+                while (primedActions.TryDequeue(out action))
+                {
+                    action();
+                }
+            }
+
             input.Update();
 
             if (input.IsKeyDown(Keys.Escape))
@@ -78,11 +103,11 @@ namespace Pipoga.Examples
 
             Point mouseOnScreen = screen.ToGridCoords(input.MousePosition);
 
-            if (input.WasMouse1Down)
+            if (input.Mouse1State.wasDown)
             {
                 lineDrawStart = mouseOnScreen;
             }
-            if (input.IsMouse1Down)
+            if (input.Mouse1State.isDown)
             {
                 var end = mouseOnScreen;
                 lineBeingDrawn = new Line(
@@ -102,6 +127,34 @@ namespace Pipoga.Examples
             foreach (var line in lines)
             {
                 screen.PlotLine(line, Color.White);
+            }
+
+            // Draw the UI-elements.
+            foreach (var button in buttons)
+            {
+                // The buttons are rectangles (at least for now).
+                screen.PlotRect(
+                    button.Body.ToRectangle(), button.BackgroundColor
+                );
+
+                Line[] buttonLines = new[] {
+                    new Line(button.Body.TopLeft,     button.Body.TopRight),
+                    new Line(button.Body.TopRight,    button.Body.BottomRight),
+                    new Line(button.Body.BottomRight, button.Body.BottomLeft),
+                    new Line(button.Body.BottomLeft,  button.Body.TopLeft),
+                };
+
+                foreach (var line in buttonLines)
+                {
+                    screen.PlotLine(line, button.ForegroundColor);
+                }
+            }
+
+            foreach (var button in buttons)
+            {
+                button.ProcessMouseEvents(
+                    mouseOnScreen, input.Mouse1State, input.Mouse2State
+                );
             }
 
             base.Update(gameTime);

@@ -33,6 +33,7 @@ namespace Pipoga
         /// </summary>
         public Point GridSize { get; private set; }
 
+        // TODO Does this order of indexing cause cache-thrashing?
         public Color? this[int x, int y]
         {
             get { return buffer[y * GridSize.X + x]; }
@@ -140,6 +141,24 @@ namespace Pipoga
                 else
                 {
                     PlotLineHigh(x0, y0, x1, y1, color);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Plot a rectangle onto the pixel-grid.
+        /// </summary>
+        public void PlotRect(Rectangle rect, Color color)
+        {
+            for (int i = 0; i < rect.Height; i++)
+            {
+                for (int j = 0; j < rect.Width; j++)
+                {
+                    var (x, y) = (rect.X + j, rect.Y + i);
+                    if (Contains(x, y))
+                    {
+                        this[x, y] = color;
+                    }
                 }
             }
         }
