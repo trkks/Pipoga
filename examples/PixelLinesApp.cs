@@ -101,7 +101,7 @@ namespace Pipoga.Examples
             // Clear the screen.
             screen.Clear();
 
-            Point mouseOnScreen = screen.ToGridCoords(input.MousePosition);
+            Point mouseOnScreen = screen.ToScreenPos(input.MousePosition);
 
             if (input.Mouse1State.wasDown)
             {
@@ -115,6 +115,8 @@ namespace Pipoga.Examples
                     end.ToVector2()
                 );
                 screen.PlotLine(lineBeingDrawn, Color.White);
+                // Color the starting pixel for looking more consistent.
+                screen[lineDrawStart] = Color.Red;
             }
             else if (lineBeingDrawn != null)
             {
@@ -127,6 +129,8 @@ namespace Pipoga.Examples
             foreach (var line in lines)
             {
                 screen.PlotLine(line, Color.White);
+                // Keep coloring the starting pixel of the lines.
+                screen[line.start.ToPoint()] = Color.Red;
             }
 
             // Draw the UI-elements.

@@ -16,6 +16,7 @@ namespace Pipoga
         // This has to be set before first running `Draw` method.
         public Texture2D PixelTexture { get; set; }
         public Point PixelSize { get; private set; }
+        public Vector2 InversePixelSize { get; private set; }
 
         /// <summary>
         /// The most fitting screen size for given pixel and grid dimensions.
@@ -40,11 +41,20 @@ namespace Pipoga
             set { buffer[y * GridSize.X + x] = value ?? DEFAULT_COLOR; }
         }
 
+        public Color? this[Point p]
+        {
+            get { return buffer[p.Y * GridSize.X + p.X]; }
+            set { buffer[p.Y * GridSize.X + p.X] = value ?? DEFAULT_COLOR; }
+        }
+
         Color[] buffer;
 
         public PixelDisplay(Point pixelSize, Point gridSize)
         {
             PixelSize = pixelSize;
+            // Compute this here once to reduce divisions.
+            InversePixelSize =
+                new Vector2(1f / (float)pixelSize.X, 1f / (float)pixelSize.Y);
             GridSize = gridSize;
             this.buffer = new Color[GridSize.X * GridSize.Y];
         }
@@ -90,9 +100,15 @@ namespace Pipoga
                 && 0 <= y && y < GridSize.Y;
         }
 
-        public Point ToGridCoords(Point pos)
+        /// <summary>
+        /// Center the position on platform-screen to the pixel on virtual
+        /// screen.
+        /// </summary>
+        /// <param name="pos">The position on platform-screen.</param>
+        /// <returns>The matching position on virtual screen.</returns>
+        public Point ToScreenPos(Point pos)
         {
-            return pos / PixelSize;
+            return (pos.ToVector2() * InversePixelSize).ToPoint();
         }
 
         public void Clear(Color? color=null)
@@ -152,9 +168,10 @@ namespace Pipoga
         {
             for (int i = 0; i < rect.Height; i++)
             {
+                var y = rect.Y + i;
                 for (int j = 0; j < rect.Width; j++)
                 {
-                    var (x, y) = (rect.X + j, rect.Y + i);
+                    var x = rect.X + j;
                     if (Contains(x, y))
                     {
                         this[x, y] = color;
