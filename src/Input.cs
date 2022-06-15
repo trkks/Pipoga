@@ -64,21 +64,8 @@ namespace Pipoga
             return v;
         }
 
-        public MouseButtonState Mouse1State => new MouseButtonState(
-            mouseState.LeftButton == ButtonState.Pressed,
-            WasInputDown(
-                KEYS_ENUM_MAX,
-                mouseState.LeftButton == ButtonState.Pressed
-            )
-        );
-
-        public MouseButtonState Mouse2State => new MouseButtonState(
-            mouseState.RightButton == ButtonState.Pressed,
-            WasInputDown(
-                KEYS_ENUM_MAX + 1,
-                mouseState.RightButton == ButtonState.Pressed
-            )
-        );
+        public MouseButtonState Mouse1State { get; private set; }
+        public MouseButtonState Mouse2State { get; private set; }
 
         public Point MousePosition => this.mouseState.Position;
 
@@ -92,6 +79,23 @@ namespace Pipoga
         {
             keyboardState = Keyboard.GetState();
             mouseState = Mouse.GetState();
+
+            Mouse1State =  new MouseButtonState(
+                isDown: mouseState.LeftButton == ButtonState.Pressed,
+                wasDown: WasInputDown(
+                    KEYS_ENUM_MAX,
+                    mouseState.LeftButton == ButtonState.Pressed
+                )
+            );
+
+            Mouse2State =  new MouseButtonState(
+                isDown: mouseState.RightButton == ButtonState.Pressed,
+                wasDown: WasInputDown(
+                    KEYS_ENUM_MAX + 1,
+                    mouseState.RightButton == ButtonState.Pressed
+                )
+            );
+
         }
 
         /// <summary>
@@ -120,6 +124,8 @@ namespace Pipoga
         /// </returns>
         bool WasInputDown(uint input, bool inputIsDown)
         {
+            // TODO If called multiple times on an update, only the first query
+            // is correct (the "was-down" -state changes after first call).
             if (inputIsDown)
             {
                 if (released[input])
