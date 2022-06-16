@@ -9,7 +9,7 @@ namespace Pipoga
     /// <summary>
     /// A grid of pixels to set with colors. Could be used in some emulation?
     /// </summary>
-    class PixelDisplay
+    public class PixelDisplay
     {
         static Color DEFAULT_COLOR = Color.Black;
 
@@ -111,6 +111,13 @@ namespace Pipoga
             return (pos.ToVector2() * InversePixelSize).ToPoint();
         }
 
+        public Rectangle ToScreenCoords(Rectangle rect)
+        {
+            return new Rectangle(
+                ToScreenPos(rect.Location), ToScreenPos(rect.Size)
+            );
+        }
+
         public void Clear(Color? color=null)
         {
             for (int y = 0; y < GridSize.Y; y++)
@@ -175,6 +182,30 @@ namespace Pipoga
                     if (Contains(x, y))
                     {
                         this[x, y] = color;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Plot the cursor in its current state.
+        /// </summary>
+        /// <param name="cursor">Cursor to plot on the screen.</param>
+        public void PlotCursor(Cursor cursor)
+        {
+            var sprite =
+                new Color[cursor.Current.Width * cursor.Current.Height];
+            cursor.Current.GetData(sprite);
+            for (int i = 0; i < cursor.Current.Height; i++)
+            {
+                for (int j = 0; j < cursor.Current.Width; j++)
+                {
+                    // Set screen point of cursor to the color on its sprite.
+                    var col = sprite[i * cursor.Current.Width + j];
+                    var pos = ToScreenPos(cursor.Position) + new Point(i, j);
+                    if (col.A > 0 && Contains(pos))
+                    {
+                        this[pos] = col;
                     }
                 }
             }

@@ -23,6 +23,7 @@ namespace Pipoga.Examples
         Queue<Action> primedActions;
 
         Point mouseOnScreen;
+        Cursor cursor;
 
         Point lineDrawStart;
         Line lineBeingDrawn;
@@ -31,7 +32,7 @@ namespace Pipoga.Examples
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            IsMouseVisible = true;
+            IsMouseVisible = false;
 
             if (args.Length == 3)
             {
@@ -50,9 +51,9 @@ namespace Pipoga.Examples
 
             lines = new List<Line>(0xff);
             buttons = new List<Button> {
-                new Button(new Point(25, 25), new Point(50, 20)),
+                new Button(new Point(125, 125), new Point(200, 100)),
                 new Button(
-                    new Point(80, 40), new Point(40, 40),
+                    new Point(300, 400), new Point(400, 200),
                     () => primedActions.Enqueue(
                         () => buttons.Add(
                             new Button(new Point(15, 7), new Point(50, 50))
@@ -62,6 +63,7 @@ namespace Pipoga.Examples
                 ),
             };
             primedActions = new Queue<Action>(0xff);
+            cursor = new Cursor();
         }
 
         protected override void Initialize()
@@ -78,8 +80,10 @@ namespace Pipoga.Examples
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            // This has to be set before drawing.
+            // These properties need to be set before drawing.
             screen.PixelTexture = Content.Load<Texture2D>("pixel");
+            cursor.Default = Content.Load<Texture2D>("cursor");
+            cursor.Hover = Content.Load<Texture2D>("cursorHover");
         }
 
         protected override void Update(GameTime gameTime)
@@ -94,6 +98,7 @@ namespace Pipoga.Examples
             }
 
             input.Update();
+            cursor.Update(input.Mouse);
 
             HandleInput();
 
@@ -117,7 +122,7 @@ namespace Pipoga.Examples
                 Exit();
             }
 
-            mouseOnScreen = screen.ToScreenPos(input.MousePosition);
+            mouseOnScreen = screen.ToScreenPos(input.Mouse.position);
         }
 
         /// <summary>
@@ -125,11 +130,11 @@ namespace Pipoga.Examples
         /// </summary>
         void UpdateLineBeingDrawn()
         {
-            if (input.Mouse1State.wasDown)
+            if (input.Mouse.m1WasDown)
             {
                 lineDrawStart = mouseOnScreen;
             }
-            if (input.Mouse1State.isDown)
+            if (input.Mouse.m1IsDown)
             {
                 var end = mouseOnScreen;
                 lineBeingDrawn = new Line(
@@ -168,30 +173,32 @@ namespace Pipoga.Examples
         {
             foreach (var button in buttons)
             {
+                // Rendering.
+                var onScreen = new RectangleBody(
+                    screen.ToScreenCoords(button.Body.ToRectangle())
+                );
                 // The buttons are rectangles (at least for now).
                 screen.PlotRect(
-                    button.Body.ToRectangle(), button.BackgroundColor
+                    onScreen.ToRectangle(), button.BackgroundColor
                 );
 
                 Line[] buttonLines = new[] {
-                    new Line(button.Body.TopLeft,     button.Body.TopRight),
-                    new Line(button.Body.TopRight,    button.Body.BottomRight),
-                    new Line(button.Body.BottomRight, button.Body.BottomLeft),
-                    new Line(button.Body.BottomLeft,  button.Body.TopLeft),
+                    new Line(onScreen.TopLeft,     onScreen.TopRight),
+                    new Line(onScreen.TopRight,    onScreen.BottomRight),
+                    new Line(onScreen.BottomRight, onScreen.BottomLeft),
+                    new Line(onScreen.BottomLeft,  onScreen.TopLeft),
                 };
 
                 foreach (var line in buttonLines)
                 {
                     screen.PlotLine(line, button.ForegroundColor);
                 }
+
+                // Actions.
+                button.ProcessMouseEvents(input.Mouse);
             }
 
-            foreach (var button in buttons)
-            {
-                button.ProcessMouseEvents(
-                    mouseOnScreen, input.Mouse1State, input.Mouse2State
-                );
-            }
+            screen.PlotCursor(cursor);
         }
 
         protected override void Draw(GameTime gameTime)

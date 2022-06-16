@@ -38,16 +38,13 @@ namespace Pipoga
             entered = false;
         }
 
-        public void ProcessMouseEvents(
-            Point position,
-            MouseButtonState m1State,
-            MouseButtonState m2State)
+        public void ProcessMouseEvents(MouseState mouse)
         {
-            if (Body.ToRectangle().Contains(position))
+            if (Body.ToRectangle().Contains(mouse.position))
             {
                 OnHoverEnter();
                 // Mouse clicks are reacted to immediately and only once.
-                if (m1State.wasDown)
+                if (mouse.m1WasDown)
                 {
                     OnClick();
                 }

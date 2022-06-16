@@ -12,7 +12,6 @@ namespace Pipoga
         const int KEYS_ENUM_MAX = 254 + 1; // Starts from zero (0)
         public bool[] released;
         KeyboardState keyboardState;
-        MouseState mouseState;
 
         // Forms a vector from WASD-keys (usually for character movement)
         public Vector2 WASD()
@@ -64,10 +63,7 @@ namespace Pipoga
             return v;
         }
 
-        public MouseButtonState Mouse1State { get; private set; }
-        public MouseButtonState Mouse2State { get; private set; }
-
-        public Point MousePosition => this.mouseState.Position;
+        public Pipoga.MouseState Mouse { get; private set; }
 
         public Input()
         {
@@ -78,24 +74,24 @@ namespace Pipoga
         public void Update()
         {
             keyboardState = Keyboard.GetState();
-            mouseState = Mouse.GetState();
 
-            Mouse1State =  new MouseButtonState(
-                isDown: mouseState.LeftButton == ButtonState.Pressed,
-                wasDown: WasInputDown(
+            var mouseState =
+                Microsoft.Xna.Framework.Input.Mouse.GetState();
+            Mouse = new MouseState(
+                position: mouseState.Position,
+
+                m1IsDown: mouseState.LeftButton == ButtonState.Pressed,
+                m1WasDown: WasInputDown(
                     KEYS_ENUM_MAX,
                     mouseState.LeftButton == ButtonState.Pressed
-                )
-            );
+                ),
 
-            Mouse2State =  new MouseButtonState(
-                isDown: mouseState.RightButton == ButtonState.Pressed,
-                wasDown: WasInputDown(
+                m2IsDown: mouseState.RightButton == ButtonState.Pressed,
+                m2WasDown: WasInputDown(
                     KEYS_ENUM_MAX + 1,
                     mouseState.RightButton == ButtonState.Pressed
                 )
             );
-
         }
 
         /// <summary>
@@ -147,15 +143,25 @@ namespace Pipoga
         }
     }
 
-    public struct MouseButtonState
+    public struct MouseState
     {
-        public readonly bool wasDown;
-        public readonly bool isDown;
+        public readonly Point position;
+        public readonly bool m1WasDown;
+        public readonly bool m1IsDown;
+        public readonly bool m2WasDown;
+        public readonly bool m2IsDown;
 
-        public MouseButtonState(bool wasDown, bool isDown)
+        public MouseState(
+            Point position,
+            bool m1WasDown, bool m1IsDown,
+            bool m2WasDown, bool m2IsDown
+        )
         {
-            this.wasDown = wasDown;
-            this.isDown = isDown;
+            this.position = position;
+            this.m1WasDown = m1WasDown;
+            this.m1IsDown  = m1IsDown;
+            this.m2WasDown = m2WasDown;
+            this.m2IsDown  = m2IsDown;
         }
     }
 }

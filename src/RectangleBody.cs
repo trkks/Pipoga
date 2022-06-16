@@ -31,6 +31,12 @@ namespace Pipoga
             this.position = new Vector2(x, y);
         }
 
+        public RectangleBody(Rectangle rect)
+        {
+            size = rect.Size.ToVector2();
+            position = rect.Location.ToVector2();
+        }
+
         public bool Colliding(RectangleBody target)
         {
             return position.X + size.X >= target.position.X &&
