@@ -196,7 +196,7 @@ namespace Pipoga
             int d = (2 * yd) - xd;
             int y = y0;
 
-            for (int x = x0; x < x1; x++)
+            for (int x = x0; x <= x1; x++)
             {
                 if (Contains(x, y))
                 {
@@ -231,7 +231,7 @@ namespace Pipoga
             int d = (2 * xd) - yd;
             int x = x0;
 
-            for (int y = y0; y < y1; y++)
+            for (int y = y0; y <= y1; y++)
             {
                 if (Contains(x, y))
                 {

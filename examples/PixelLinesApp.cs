@@ -22,6 +22,8 @@ namespace Pipoga.Examples
         // Unordered collection of actions to run once during the simulation.
         Queue<Action> primedActions;
 
+        Point mouseOnScreen;
+
         Point lineDrawStart;
         Line lineBeingDrawn;
 
@@ -93,16 +95,36 @@ namespace Pipoga.Examples
 
             input.Update();
 
+            HandleInput();
+
+            // Clear the screen.
+            screen.Clear();
+
+            UpdateLineBeingDrawn();
+            UpdateLines();
+            UpdateUI();
+
+            base.Update(gameTime);
+        }
+
+        /// <summary>
+        /// Perform actions based on user input.
+        /// </summary>
+        void HandleInput()
+        {
             if (input.IsKeyDown(Keys.Escape))
             {
                 Exit();
             }
 
-            // Clear the screen.
-            screen.Clear();
+            mouseOnScreen = screen.ToScreenPos(input.MousePosition);
+        }
 
-            Point mouseOnScreen = screen.ToScreenPos(input.MousePosition);
-
+        /// <summary>
+        /// Redraw the line that user is drawing by dragging the mouse.
+        /// </summary>
+        void UpdateLineBeingDrawn()
+        {
             if (input.Mouse1State.wasDown)
             {
                 lineDrawStart = mouseOnScreen;
@@ -124,16 +146,26 @@ namespace Pipoga.Examples
                 lines.Add(lineBeingDrawn);
                 lineBeingDrawn = null;
             }
+        }
 
-            // Draw the lines that user has drawn.
+        /// <summary>
+        /// Re-"draw" the lines that user has already drawn on the screen.
+        /// </summary>
+        void UpdateLines()
+        {
             foreach (var line in lines)
             {
                 screen.PlotLine(line, Color.White);
                 // Keep coloring the starting pixel of the lines.
                 screen[line.start.ToPoint()] = Color.Red;
             }
+        }
 
-            // Draw the UI-elements.
+        /// <summary>
+        /// Re-"draw" the UI-elements.
+        /// </summary>
+        void UpdateUI()
+        {
             foreach (var button in buttons)
             {
                 // The buttons are rectangles (at least for now).
@@ -160,8 +192,6 @@ namespace Pipoga.Examples
                     mouseOnScreen, input.Mouse1State, input.Mouse2State
                 );
             }
-
-            base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
