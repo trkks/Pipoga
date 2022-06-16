@@ -1,11 +1,13 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Pipoga
 {
-    public class Button
+    public class Button : IRasterizable
     {
         /// <summary>
         /// Private setter as not to change at will. Separate methods are
@@ -78,6 +80,49 @@ namespace Pipoga
         {
             callback();
         }
+
+        public IEnumerable<Vertex> GetVertices(Vector2 inversePixelSize)
+        {
+            // First the rectangle inside.
+            // The buttons are rectangles (at least for now).
+            var r = new Rectangle(
+                (Body.position * inversePixelSize).ToPoint(),
+                (Body.size * inversePixelSize).ToPoint()
+            );
+            for (int i = 0; i < r.Height; i++)
+            {
+                int y = r.Y + i;
+                for (int j = 0; j < r.Width; j++)
+                {
+                    int x = r.X + j;
+                    yield return new Vertex(x, y, BackgroundColor);
+                }
+            }
+
+            // TODO Using this for the properties feels stupid...
+            var rb = new RectangleBody(r);
+
+            // Then the borders.
+            foreach (var line in Enumerable.Select(
+                new[] {
+                    (rb.TopLeft,     rb.TopRight),
+                    (rb.TopRight,    rb.BottomRight),
+                    (rb.BottomRight, rb.BottomLeft),
+                    (rb.BottomLeft,  rb.TopLeft),
+                },
+                t => new Line(t.Item1, t.Item2)
+            ))
+            {
+                // NOTE This pattern of unwrapping the iterator is dumb and C#
+                // is dumb >:(
+                foreach (var x in line.GetVertices(inversePixelSize).Select(
+                    // TODO Implement style for Line, which contains coloring.
+                    v => new Vertex(v.X, v.Y, ForegroundColor)
+                ))
+                {
+                    yield return x;
+                }
+            }
+        }
     }
 }
-

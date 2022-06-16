@@ -141,7 +141,7 @@ namespace Pipoga.Examples
                     lineDrawStart.ToVector2(),
                     end.ToVector2()
                 );
-                screen.PlotLine(lineBeingDrawn, Color.White);
+                screen.Plot(lineBeingDrawn);
                 // Color the starting pixel for looking more consistent.
                 screen[lineDrawStart] = Color.Red;
             }
@@ -160,7 +160,7 @@ namespace Pipoga.Examples
         {
             foreach (var line in lines)
             {
-                screen.PlotLine(line, Color.White);
+                screen.Plot(line);
                 // Keep coloring the starting pixel of the lines.
                 screen[line.start.ToPoint()] = Color.Red;
             }
@@ -174,31 +174,13 @@ namespace Pipoga.Examples
             foreach (var button in buttons)
             {
                 // Rendering.
-                var onScreen = new RectangleBody(
-                    screen.ToScreenCoords(button.Body.ToRectangle())
-                );
-                // The buttons are rectangles (at least for now).
-                screen.PlotRect(
-                    onScreen.ToRectangle(), button.BackgroundColor
-                );
-
-                Line[] buttonLines = new[] {
-                    new Line(onScreen.TopLeft,     onScreen.TopRight),
-                    new Line(onScreen.TopRight,    onScreen.BottomRight),
-                    new Line(onScreen.BottomRight, onScreen.BottomLeft),
-                    new Line(onScreen.BottomLeft,  onScreen.TopLeft),
-                };
-
-                foreach (var line in buttonLines)
-                {
-                    screen.PlotLine(line, button.ForegroundColor);
-                }
+                screen.Plot(button);
 
                 // Actions.
                 button.ProcessMouseEvents(input.Mouse);
             }
 
-            screen.PlotCursor(cursor);
+            screen.Plot(cursor);
         }
 
         protected override void Draw(GameTime gameTime)
