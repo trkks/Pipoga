@@ -1,17 +1,23 @@
+using System;
+using System.Collections.Generic;
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System;
 
 namespace Pipoga
 {
-    public class Input
+    // TODO Implement IObservable for keyboard (and generally on HW-controls).
+    public class Input : IObservable<MouseState>
     {
         // This was found by printing and then observing (using System.Linq):
         //   Enum.GetValues(typeof(Keys)).Cast<uint>().Max()
         const int KEYS_ENUM_MAX = 254 + 1; // Starts from zero (0)
         public bool[] released;
+
         KeyboardState keyboardState;
+        List<IObserver<MouseState>> _mouseObservers;
+
 
         // Forms a vector from WASD-keys (usually for character movement)
         public Vector2 WASD()
@@ -69,6 +75,7 @@ namespace Pipoga
         {
             released = new bool[Input.KEYS_ENUM_MAX + 2];
             Array.Fill(released, true);
+            _mouseObservers = new List<IObserver<MouseState>>(0xff);
         }
 
         public void Update()
@@ -92,6 +99,8 @@ namespace Pipoga
                     mouseState.RightButton == ButtonState.Pressed
                 )
             );
+
+            NotifyMouseObservers();
         }
 
         /// <summary>
@@ -140,6 +149,46 @@ namespace Pipoga
         public bool IsKeyDown(Keys key)
         {
             return keyboardState.IsKeyDown(key);
+        }
+
+        private void NotifyMouseObservers()
+        {
+            foreach (var observer in _mouseObservers)
+            {
+                observer.OnNext(Mouse);
+            }
+        }
+
+        public virtual IDisposable Subscribe(IObserver<MouseState> observer)
+        {
+            if (!_mouseObservers.Contains(observer))
+            {
+                _mouseObservers.Add(observer);
+            }
+            return new MouseUnsubscriber(_mouseObservers, observer);
+        }
+
+        private class MouseUnsubscriber : IDisposable
+        {
+            private List<IObserver<MouseState>> observers;
+            private IObserver<MouseState> observer;
+
+            public MouseUnsubscriber(
+                List<IObserver<MouseState>> observers,
+                IObserver<MouseState> observer
+            )
+            {
+                this.observers = observers;
+                this.observer = observer;
+            }
+
+            public void Dispose()
+            {
+                if (observer != null && observers.Contains(observer))
+                {
+                    observers.Remove(observer);
+                }
+            }
         }
     }
 

@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Pipoga
 {
-    public class Button : IRasterizable
+    public class Button : IRasterizable, IObserver<MouseState>
     {
         /// <summary>
         /// Private setter as not to change at will. Separate methods are
@@ -38,47 +38,6 @@ namespace Pipoga
             originalForeground = ForegroundColor;
 
             entered = false;
-        }
-
-        public void ProcessMouseEvents(MouseState mouse)
-        {
-            if (Body.ToRectangle().Contains(mouse.position))
-            {
-                OnHoverEnter();
-                // Mouse clicks are reacted to immediately and only once.
-                if (mouse.m1WasDown)
-                {
-                    OnClick();
-                }
-            }
-            else
-            {
-                OnHoverExit();
-            }
-        }
-
-        public void OnHoverEnter()
-        {
-            if (!entered)
-            {
-                entered = true;
-                var tmp = BackgroundColor;
-                BackgroundColor = ForegroundColor;
-                ForegroundColor = tmp;
-            }
-        }
-
-        public void OnHoverExit()
-        {
-            // Always reset to correct colors.
-            entered = false;
-            BackgroundColor = originalBackground;
-            ForegroundColor = originalForeground;
-        }
-
-        public void OnClick()
-        {
-            callback();
         }
 
         public IEnumerable<Vertex> GetVertices(Vector2 inversePixelSize)
@@ -123,6 +82,53 @@ namespace Pipoga
                     yield return x;
                 }
             }
+        }
+
+        // NOTE These 3 methods are `virtual` because MSDN shows so:
+        // https://docs.microsoft.com/en-us/dotnet/standard/events/how-to-implement-an-observer#example
+        public virtual void OnCompleted() { }
+
+        public virtual void OnError(Exception error) { }
+
+        public virtual void OnNext(MouseState mouse)
+        {
+            if (Body.ToRectangle().Contains(mouse.position))
+            {
+                OnHoverEnter();
+                // Mouse clicks are reacted to immediately and only once.
+                if (mouse.m1WasDown)
+                {
+                    OnClick();
+                }
+            }
+            else
+            {
+                OnHoverExit();
+            }
+       }
+
+        void OnHoverEnter()
+        {
+            if (!entered)
+            {
+                entered = true;
+                var tmp = BackgroundColor;
+                BackgroundColor = ForegroundColor;
+                ForegroundColor = tmp;
+            }
+        }
+
+        void OnHoverExit()
+        {
+            // Always reset to correct colors.
+            entered = false;
+            BackgroundColor = originalBackground;
+            ForegroundColor = originalForeground;
+        }
+
+        void OnClick()
+        {
+            callback();
         }
     }
 }

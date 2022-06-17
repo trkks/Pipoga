@@ -18,6 +18,8 @@ namespace Pipoga.Examples
 
         PixelDisplay screen;
         List<Line> lines;
+        // TODO This list feels obsolete, as buttons are (should) always
+        // contained in the Observable-interface of Input for mouse events.
         List<Button> buttons;
         // Unordered collection of actions to run once during the simulation.
         Queue<Action> primedActions;
@@ -55,15 +57,26 @@ namespace Pipoga.Examples
                 new Button(
                     new Point(300, 400), new Point(400, 200),
                     () => primedActions.Enqueue(
-                        () => buttons.Add(
-                            new Button(new Point(15, 7), new Point(50, 50))
-                        )
+                        () => {
+                            buttons.Add(
+                                new Button(new Point(15, 7), new Point(50, 50))
+                            );
+                            // Always remember to subscribe new buttons TODO
+                            // automate this
+                            input.Subscribe(buttons[buttons.Count- 1]);
+                        }
                     ),
                     Color.Pink, Color.Red
                 ),
             };
             primedActions = new Queue<Action>(0xff);
             cursor = new Cursor();
+
+            // Add mouse-observing to buttons.
+            foreach (var button in buttons)
+            {
+                input.Subscribe(button);
+            }
         }
 
         protected override void Initialize()
@@ -175,9 +188,6 @@ namespace Pipoga.Examples
             {
                 // Rendering.
                 screen.Plot(button);
-
-                // Actions.
-                button.ProcessMouseEvents(input.Mouse);
             }
 
             screen.Plot(cursor);
