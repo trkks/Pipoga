@@ -6,12 +6,16 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Pipoga
 {
-    public enum MouseEvent
+    /// <summary>
+    /// States that the cursor can be in (for animations also?). Maybe Keep
+    /// these as powers of two.
+    /// </summary>
+    public enum CursorState: int
     {
-        None,
-        HoverEnter,
-        HoverExit,
+        Default = 0,
+        Hover = 1,
     }
+
     /// <summary>
     /// A cursor with appearance changing based on events.
     /// </summary>
@@ -19,27 +23,22 @@ namespace Pipoga
     {
         public Point Position { get; private set; }
 
-        public MouseEvent State
+        public CursorState State
         {
             get => _state;
             set
             {
-                switch (value)
-                {
-                case MouseEvent.HoverEnter:
-                    Current = Hover;
-                    break;
-                case MouseEvent.HoverExit:
-                    Current = Default;
-                    break;
-                default:
-                    Current = Default;
-                    break;
-                }
                 _state = value;
+                Current = _state switch
+                {
+                    CursorState.Hover => Hover,
+                    _ => Default,
+                };
             }
         }
+
         public Texture2D Current { get; set; }
+
         public Texture2D Default
         {
             private get => _default;
@@ -50,9 +49,10 @@ namespace Pipoga
                 _default = value;
             }
         }
+
         public Texture2D Hover { private get; set; }
 
-        private MouseEvent _state = MouseEvent.None;
+        private CursorState _state = CursorState.Default;
         private Texture2D _default;
 
         public void Update(MouseState state)

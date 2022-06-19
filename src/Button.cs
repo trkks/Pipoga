@@ -7,7 +7,15 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Pipoga
 {
-    public class Button : IRasterizable, IObserver<MouseState>
+    public enum ButtonEvent
+    {
+        None,
+        HoverEnter,
+        HoverExit,
+        Click,
+    }
+
+    public class Button : IRasterizable
     {
         /// <summary>
         /// Private setter as not to change at will. Separate methods are
@@ -84,13 +92,7 @@ namespace Pipoga
             }
         }
 
-        // NOTE These 3 methods are `virtual` because MSDN shows so:
-        // https://docs.microsoft.com/en-us/dotnet/standard/events/how-to-implement-an-observer#example
-        public virtual void OnCompleted() { }
-
-        public virtual void OnError(Exception error) { }
-
-        public virtual void OnNext(MouseState mouse)
+        public ButtonEvent Update(MouseState mouse)
         {
             if (Body.ToRectangle().Contains(mouse.position))
             {
@@ -99,13 +101,21 @@ namespace Pipoga
                 if (mouse.m1WasDown)
                 {
                     OnClick();
+                    return ButtonEvent.Click;
+                }
+                else
+                {
+                    return ButtonEvent.HoverEnter;
                 }
             }
             else
             {
                 OnHoverExit();
+                return ButtonEvent.HoverExit;
             }
-       }
+            // Dead code
+            return ButtonEvent.None;
+        }
 
         void OnHoverEnter()
         {

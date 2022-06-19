@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework.Input;
 namespace Pipoga
 {
     // TODO Implement IObservable for keyboard (and generally on HW-controls).
-    public class Input : IObservable<MouseState>
+    public class Input : IObservable<Input>
     {
         // This was found by printing and then observing (using System.Linq):
         //   Enum.GetValues(typeof(Keys)).Cast<uint>().Max()
@@ -16,7 +16,7 @@ namespace Pipoga
         public bool[] released;
 
         KeyboardState keyboardState;
-        List<IObserver<MouseState>> _mouseObservers;
+        List<IObserver<Input>> _observers;
 
 
         // Forms a vector from WASD-keys (usually for character movement)
@@ -75,7 +75,7 @@ namespace Pipoga
         {
             released = new bool[Input.KEYS_ENUM_MAX + 2];
             Array.Fill(released, true);
-            _mouseObservers = new List<IObserver<MouseState>>(0xff);
+            _observers = new List<IObserver<Input>>(0xff);
         }
 
         public void Update()
@@ -100,7 +100,7 @@ namespace Pipoga
                 )
             );
 
-            NotifyMouseObservers();
+            NotifyObservers();
         }
 
         /// <summary>
@@ -151,31 +151,31 @@ namespace Pipoga
             return keyboardState.IsKeyDown(key);
         }
 
-        private void NotifyMouseObservers()
+        private void NotifyObservers()
         {
-            foreach (var observer in _mouseObservers)
+            foreach (var observer in _observers)
             {
-                observer.OnNext(Mouse);
+                observer.OnNext(this);
             }
         }
 
-        public virtual IDisposable Subscribe(IObserver<MouseState> observer)
+        public virtual IDisposable Subscribe(IObserver<Input> observer)
         {
-            if (!_mouseObservers.Contains(observer))
+            if (!_observers.Contains(observer))
             {
-                _mouseObservers.Add(observer);
+                _observers.Add(observer);
             }
-            return new MouseUnsubscriber(_mouseObservers, observer);
+            return new Unsubscriber(_observers, observer);
         }
 
-        private class MouseUnsubscriber : IDisposable
+        private class Unsubscriber : IDisposable
         {
-            private List<IObserver<MouseState>> observers;
-            private IObserver<MouseState> observer;
+            private List<IObserver<Input>> observers;
+            private IObserver<Input> observer;
 
-            public MouseUnsubscriber(
-                List<IObserver<MouseState>> observers,
-                IObserver<MouseState> observer
+            public Unsubscriber(
+                List<IObserver<Input>> observers,
+                IObserver<Input> observer
             )
             {
                 this.observers = observers;
