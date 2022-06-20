@@ -45,27 +45,12 @@ namespace Pipoga
 
         public virtual void OnNext(Input input)
         {
+            bool isMousePointing = false;
             foreach (var button in _buttons)
             {
-                var buttonEvent = button.Update(input.Mouse);
-
-                // TODO Move this to a cursor-method like with buttons.
-                // TODO This repetition (BE.HoverExit => CS.Hover) feels dumb
-                // and  brittle.
-                if (buttonEvent == ButtonEvent.HoverExit)
-                {
-                    _cursor.State = CursorState.Default;
-                }
-                if (buttonEvent == ButtonEvent.HoverEnter)
-                {
-                    _cursor.State = CursorState.Hover;
-                }
-                // TODO Animate (maybe?).
-                //if (buttonEvent & ButtonEvent.Click == 1)
-                //{
-                //    _cursor.State = CursorState.AnimateClick;
-                //}
+                isMousePointing |= button.Update(input.Mouse);
             }
+            _cursor.Update(input.Mouse, isMousePointing);
         }
 
         public IEnumerable<Vertex> GetVertices(Vector2 inversePixelSize)

@@ -92,7 +92,13 @@ namespace Pipoga
             }
         }
 
-        public ButtonEvent Update(MouseState mouse)
+        /// <summary>
+        /// Update the button according to mouse state. A button changes for
+        /// example if it is active and a mouse hovers over it or is clicked.
+        /// </summary>
+        /// <param name="mouse">State of the mouse.</param>
+        /// <returns>True if the mouse is hovering over the button.</returns>
+        public bool Update(MouseState mouse)
         {
             if (Body.ToRectangle().Contains(mouse.position))
             {
@@ -101,20 +107,14 @@ namespace Pipoga
                 if (mouse.m1WasDown)
                 {
                     OnClick();
-                    return ButtonEvent.Click;
                 }
-                else
-                {
-                    return ButtonEvent.HoverEnter;
-                }
+                return true;
             }
             else
             {
                 OnHoverExit();
-                return ButtonEvent.HoverExit;
             }
-            // Dead code
-            return ButtonEvent.None;
+            return false;
         }
 
         void OnHoverEnter()

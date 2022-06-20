@@ -22,7 +22,6 @@ namespace Pipoga.Examples
         Queue<Action> primedActions;
 
         Point mouseOnScreen;
-        Cursor cursor;
         Gui gui;
 
         Point lineDrawStart;
@@ -51,25 +50,6 @@ namespace Pipoga.Examples
 
             lines = new List<Line>(0xff);
             primedActions = new Queue<Action>(0xff);
-
-            // Iniitalize the GUI.
-            cursor = new Cursor();
-            gui = new Gui(cursor, input);
-            var buttons = new List<Button> {
-                new Button(new Point(125, 125), new Point(200, 100)),
-                new Button(
-                    new Point(300, 400), new Point(400, 200),
-                    () => primedActions.Enqueue(
-                        () => {
-                            gui.Add(
-                                new Button(new Point(15, 7), new Point(50, 50))
-                            );
-                        }
-                    ),
-                    Color.Pink, Color.Red
-                ),
-            };
-            gui.AddRange(buttons);
         }
 
         protected override void Initialize()
@@ -88,8 +68,34 @@ namespace Pipoga.Examples
 
             // These properties need to be set before drawing.
             screen.PixelTexture = Content.Load<Texture2D>("pixel");
-            cursor.Default = Content.Load<Texture2D>("cursor");
-            cursor.Hover = Content.Load<Texture2D>("cursorHover");
+
+            // Initialize the GUI.
+            var cursor = new Cursor(
+                defaultIcon: new CursorIcon(
+                    Content.Load<Texture2D>("cursor"),
+                    new Point(1, 1)
+                ),
+                pointer: new CursorIcon(
+                    Content.Load<Texture2D>("cursorHover"),
+                    new Point(4, 1)
+                )
+            );
+            gui = new Gui(cursor, input);
+            var buttons = new List<Button> {
+                new Button(new Point(125, 125), new Point(200, 100)),
+                new Button(
+                    new Point(300, 400), new Point(400, 200),
+                    () => primedActions.Enqueue(
+                        () => {
+                            gui.Add(
+                                new Button(new Point(15, 7), new Point(50, 50))
+                            );
+                        }
+                    ),
+                    Color.Pink, Color.Red
+                ),
+            };
+            gui.AddRange(buttons);
         }
 
         protected override void Update(GameTime gameTime)
@@ -104,7 +110,6 @@ namespace Pipoga.Examples
             }
 
             input.Update();
-            cursor.Update(input.Mouse);
 
             HandleInput();
 

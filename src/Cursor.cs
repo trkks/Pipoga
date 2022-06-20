@@ -7,13 +7,34 @@ using Microsoft.Xna.Framework.Graphics;
 namespace Pipoga
 {
     /// <summary>
-    /// States that the cursor can be in (for animations also?). Maybe Keep
-    /// these as powers of two.
+    /// Contains the image of the cursor and the offset on it to match with
+    /// actual mouse position on screen.
     /// </summary>
-    public enum CursorState: int
+    public struct CursorIcon
     {
-        Default = 0,
-        Hover = 1,
+        public Texture2D image;
+        public Point offset;
+
+        /// <summary>
+        /// Construct a new CursorIcon.
+        /// </summary>
+        /// <param name="image">Image of the icon.</param>
+        /// <param name="point">The point on image that is pointed with.</param>
+        /// <exception>
+        /// Generic exception (TODO) if the point is outside of image.
+        /// </exception>
+        public CursorIcon(Texture2D image, Point point)
+        {
+            this.image = image;
+            if (!image.Bounds.Contains(point))
+            {
+                throw new Exception(
+                    $"Given point ({point}) is outside the bounds "
+                    + $"({image.Bounds}) of the cursor image."
+                );
+            }
+            this.offset = point;
+        }
     }
 
     /// <summary>
@@ -21,59 +42,46 @@ namespace Pipoga
     /// </summary>
     public class Cursor : IRasterizable
     {
-        public Point Position { get; private set; }
+        CursorIcon _defaultIcon;
+        CursorIcon _pointer;
+        CursorIcon _current;
+        Point _position;
 
-        public CursorState State
+        /// <summary>
+        /// Create a new cursor with icons for its states.
+        ///
+        /// The icon names are same as in CSS:
+        /// https://developer.mozilla.org/en-US/docs/Web/CSS/cursor#values
+        /// </summary>
+        public Cursor(CursorIcon defaultIcon, CursorIcon pointer)
         {
-            get => _state;
-            set
-            {
-                _state = value;
-                Current = _state switch
-                {
-                    CursorState.Hover => Hover,
-                    _ => Default,
-                };
-            }
+            _defaultIcon = defaultIcon;
+            _pointer = pointer;
+            _current = defaultIcon;
         }
 
-        public Texture2D Current { get; set; }
-
-        public Texture2D Default
+        public void Update(MouseState mouse, bool pointing=false)
         {
-            private get => _default;
-            set
-            {
-                // Initialize current at the same time to the default.
-                Current = value;
-                _default = value;
-            }
-        }
-
-        public Texture2D Hover { private get; set; }
-
-        private CursorState _state = CursorState.Default;
-        private Texture2D _default;
-
-        public void Update(MouseState state)
-        {
-            Position = state.position;
+            // Change between icons if over a pointee (TODO need more options?).
+            _current = pointing ? _pointer : _defaultIcon;
+            _position = mouse.position;// - _current.offset;
         }
 
         public IEnumerable<Vertex> GetVertices(Vector2 inversePixelSize)
         {
-            var sprite = new Color[Current.Width * Current.Height];
-            Current.GetData(sprite);
+            int size = _current.image.Width * _current.image.Height;
+            var sprite = new Color[size];
+            _current.image.GetData(sprite);
 
-            for (int i = 0; i < Current.Height; i++)
+            for (int y = 0; y < _current.image.Height; y++)
             {
-                for (int j = 0; j < Current.Width; j++)
+                for (int x = 0; x < _current.image.Width; x++)
                 {
                     // Set screen point of cursor to the color on its sprite.
-                    var col = sprite[i * Current.Width + j];
+                    var col = sprite[y * _current.image.Width + x];
                     var pos =
-                        (Position.ToVector2() * inversePixelSize).ToPoint()
-                        + new Point(i, j);
+                        (_position.ToVector2() * inversePixelSize).ToPoint()
+                        + new Point(x, y);
                     yield return new Vertex(pos.X, pos.Y, col);
                 }
             }
