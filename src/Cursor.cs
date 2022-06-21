@@ -15,6 +15,8 @@ namespace Pipoga
         public Texture2D image;
         public Point offset;
 
+        public int Width => image.Width;
+        public int Height => image.Height;
         /// <summary>
         /// Construct a new CursorIcon.
         /// </summary>
@@ -44,6 +46,7 @@ namespace Pipoga
     {
         CursorIcon _defaultIcon;
         CursorIcon _pointer;
+        CursorIcon _pressed;
         CursorIcon _current;
         Point _position;
 
@@ -57,14 +60,53 @@ namespace Pipoga
         {
             _defaultIcon = defaultIcon;
             _pointer = pointer;
+            {
+                // The pressed-icon will be same as pointer but scaled smaller.
+                float scale = 0.8f;
+                var size = new Point(
+                    (int)((float)_pointer.Width * scale),
+                    (int)((float)_pointer.Height * scale)
+                );
+                var location = new Point(
+                    (int)((float)_pointer.Width - size.X),
+                    (int)((float)_pointer.Height - size.Y)
+                );
+                var pressedRect = new Rectangle(location, size);
+                int length = size.X * size.Y;
+                Color[] pressedData = new Color[length];
+                _pointer.image.GetData(
+                    level: 0,
+                    rect: pressedRect,
+                    data: pressedData,
+                    startIndex: 0,
+                    elementCount: length
+                );
+                _pressed.image = new Texture2D(
+                    _pointer.image.GraphicsDevice,
+                    pressedRect.Width,
+                    pressedRect.Height
+                );
+                _pressed.image.SetData(
+                    level: 0,
+                    rect: null,
+                    data: pressedData,
+                    startIndex: 0,
+                    elementCount: length
+                );
+            }
             _current = defaultIcon;
         }
 
         public void Update(MouseState mouse, bool pointing=false)
         {
             // Change between icons if over a pointee (TODO need more options?).
-            _current = pointing ? _pointer : _defaultIcon;
-            _position = mouse.position;// - _current.offset;
+            _current =
+                mouse.m1IsDown 
+                ? _pressed
+                : pointing
+                ? _pointer
+                : _defaultIcon;
+            _position = mouse.position;
         }
 
         public IEnumerable<Vertex> GetVertices(Vector2 inversePixelSize)
@@ -81,6 +123,7 @@ namespace Pipoga
                     var col = sprite[y * _current.image.Width + x];
                     var pos =
                         (_position.ToVector2() * inversePixelSize).ToPoint()
+                        - _current.offset
                         + new Point(x, y);
                     yield return new Vertex(pos.X, pos.Y, col);
                 }
