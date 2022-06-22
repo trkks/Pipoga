@@ -60,40 +60,12 @@ namespace Pipoga
         {
             _defaultIcon = defaultIcon;
             _pointer = pointer;
-            {
-                // The pressed-icon will be same as pointer but scaled smaller.
-                float scale = 0.8f;
-                var size = new Point(
-                    (int)((float)_pointer.Width * scale),
-                    (int)((float)_pointer.Height * scale)
-                );
-                var location = new Point(
-                    (int)((float)_pointer.Width - size.X),
-                    (int)((float)_pointer.Height - size.Y)
-                );
-                var pressedRect = new Rectangle(location, size);
-                int length = size.X * size.Y;
-                Color[] pressedData = new Color[length];
-                _pointer.image.GetData(
-                    level: 0,
-                    rect: pressedRect,
-                    data: pressedData,
-                    startIndex: 0,
-                    elementCount: length
-                );
-                _pressed.image = new Texture2D(
-                    _pointer.image.GraphicsDevice,
-                    pressedRect.Width,
-                    pressedRect.Height
-                );
-                _pressed.image.SetData(
-                    level: 0,
-                    rect: null,
-                    data: pressedData,
-                    startIndex: 0,
-                    elementCount: length
-                );
-            }
+            // The pressed-icon will be same as pointer but slighty descended.
+            _pressed = new CursorIcon(
+                _pointer.image,
+                pointer.offset + new Point(0, -1)
+            );
+
             _current = defaultIcon;
         }
 
