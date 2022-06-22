@@ -19,7 +19,7 @@ namespace Pipoga.Examples
         PixelDisplay screen;
         List<Line> lines;
         // Unordered collection of actions to run once during the simulation.
-        Queue<Action> primedActions;
+        Queue<Action<PixelLinesApp>> primedActions;
 
         Point mouseOnScreen;
         Gui gui;
@@ -49,7 +49,7 @@ namespace Pipoga.Examples
             input = new Input();
 
             lines = new List<Line>(0xff);
-            primedActions = new Queue<Action>(0xff);
+            primedActions = new Queue<Action<PixelLinesApp>>(0xff);
         }
 
         protected override void Initialize()
@@ -82,12 +82,26 @@ namespace Pipoga.Examples
             );
             gui = new Gui(cursor, input);
             var buttons = new List<Button> {
-                new Button(new Point(125, 125), new Point(200, 100)),
+                new Button(new Point(125, 125), new Point(200, 100),
+                    (b) => primedActions.Enqueue(
+                        (app) => {
+                            if (app.lines.Count > 0)
+                            {
+                                // Undo the previous line-draw.
+                                app.lines.RemoveAt(lines.Count - 1);
+                            }
+                            else
+                            {
+                                b.BackgroundColor = Color.Gray;
+                            }
+                        }
+                    )
+                ),
                 new Button(
                     new Point(300, 400), new Point(400, 200),
-                    () => primedActions.Enqueue(
-                        () => {
-                            gui.Add(
+                    (_) => primedActions.Enqueue(
+                        (app) => {
+                            app.gui.Add(
                                 new Button(new Point(15, 7), new Point(50, 50))
                             );
                         }
@@ -102,10 +116,10 @@ namespace Pipoga.Examples
         {
             // Run the previously primed actions before anything else.
             {
-                Action action;
+                Action<PixelLinesApp> action;
                 while (primedActions.TryDequeue(out action))
                 {
-                    action();
+                    action(this);
                 }
             }
 
@@ -133,6 +147,9 @@ namespace Pipoga.Examples
                 Exit();
             }
 
+            // TODO Implement `KeyCombinationPressed` or smth method on Input
+            // for Ctrl-Z and other common keyboard inputs.
+
             mouseOnScreen = screen.ToScreenPos(input.Mouse.position);
         }
 
@@ -141,6 +158,14 @@ namespace Pipoga.Examples
         /// </summary>
         void UpdateLineBeingDrawn()
         {
+            // Only mouse actions happening over the background-canvas are allowed.
+            // TODO Instead of checking against all GUI-elements, implement a
+            // specialized Canvas-element for drawing lines.
+            if (gui.IsOver(input.Mouse.position))
+            {
+                return;
+            }
+
             if (input.Mouse.m1WasDown)
             {
                 lineDrawStart = mouseOnScreen;

@@ -37,6 +37,24 @@ namespace Pipoga
             _buttons.AddRange(buttons);
         }
 
+        /// <summary>
+        /// Check that a point collides with the GUI.
+        /// </summary>
+        /// <param name="point">The point to check.</param>
+        /// <returns>True if the point is over any GUI-element.</returns>
+        public bool IsOver(Point point)
+        {
+            // TODO This feels misleading, as the Cursor is also part of GUI...
+            foreach (var button in _buttons)
+            {
+                if (button.Body.ToRectangle().Contains(point))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         // NOTE These 3 methods are `virtual` because MSDN shows so:
         // https://docs.microsoft.com/en-us/dotnet/standard/events/how-to-implement-an-observer#example
         public virtual void OnCompleted() { }

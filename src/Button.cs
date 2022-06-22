@@ -27,19 +27,19 @@ namespace Pipoga
 
         readonly Color originalBackground;
         readonly Color originalForeground;
-        Action callback;
+        Action<Button> callback;
 
         bool entered;
 
         public Button(
             Point position,
             Point size,
-            Action onClick = null,
+            Action<Button> onClick = null,
             Color? backgroundColor = null,
             Color? foregroundColor = null)
         {
             Body = new RectangleBody(position.ToVector2(), size.ToVector2());
-            this.callback = onClick ?? (() => {});
+            callback = onClick ?? (_ => { });
             BackgroundColor = backgroundColor ?? Color.Black;
             ForegroundColor = foregroundColor ?? Color.White;
             originalBackground = BackgroundColor;
@@ -138,7 +138,7 @@ namespace Pipoga
 
         void OnClick()
         {
-            callback();
+            callback(this);
         }
     }
 }
