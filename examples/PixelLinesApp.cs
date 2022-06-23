@@ -18,6 +18,7 @@ namespace Pipoga.Examples
 
         PixelDisplay screen;
         List<Line> lines;
+        int lastLineHandle;
         // Unordered collection of actions to run once during the simulation.
         Queue<Action<PixelLinesApp>> primedActions;
 
@@ -82,32 +83,46 @@ namespace Pipoga.Examples
             );
             gui = new Gui(cursor, input);
             var buttons = new List<Button> {
-                new Button(new Point(125, 125), new Point(200, 100),
+                new Button(new Point(20, 20), new Point(150, 50),
                     (b) => primedActions.Enqueue(
                         (app) => {
-                            if (app.lines.Count > 0)
+                            if (app.lastLineHandle > 0)
                             {
-                                // Undo the previous line-draw.
-                                app.lines.RemoveAt(lines.Count - 1);
+                                // "Undo" the previous line-draw.
+                                app.lastLineHandle--;
                             }
                             else
                             {
-                                b.BackgroundColor = Color.Gray;
+                                b.BackgroundColor = Color.Lerp(
+                                    Color.Gray,
+                                    b.BackgroundColor,
+                                    0.5f
+                                );;
                             }
-                        }
-                    )
-                ),
-                new Button(
-                    new Point(300, 400), new Point(400, 200),
-                    (_) => primedActions.Enqueue(
-                        (app) => {
-                            app.gui.Add(
-                                new Button(new Point(15, 7), new Point(50, 50))
-                            );
                         }
                     ),
                     Color.Pink, Color.Red
                 ),
+                new Button(new Point(180, 20), new Point(150, 50),
+                    (b) => primedActions.Enqueue(
+                        (app) => {
+                            if (app.lastLineHandle < app.lines.Count)
+                            {
+                                // "Redo" the previous line-draw.
+                                app.lastLineHandle++;
+                            }
+                            else
+                            {
+                                b.BackgroundColor = Color.Lerp(
+                                    Color.Gray,
+                                    b.BackgroundColor,
+                                    0.5f
+                                );
+                            }
+                        }
+                    ),
+                    Color.LightGreen, Color.Green
+                )
             };
             gui.AddRange(buttons);
         }
@@ -183,8 +198,13 @@ namespace Pipoga.Examples
             }
             else if (lineBeingDrawn != null)
             {
+                // Adding a new line invalidates the redo-stack, and starts a
+                // new "branch" of actions.
+                lines.RemoveRange(lastLineHandle, lines.Count - lastLineHandle);
                 // User has released, so save the line.
                 lines.Add(lineBeingDrawn);
+                lastLineHandle++;
+
                 lineBeingDrawn = null;
             }
         }
@@ -194,8 +214,9 @@ namespace Pipoga.Examples
         /// </summary>
         void UpdateLines()
         {
-            foreach (var line in lines)
+            for (int i = 0; i < lastLineHandle; i++)
             {
+                var line = lines[i];
                 screen.Plot(line);
                 // Keep coloring the starting pixel of the lines.
                 screen[line.start.ToPoint()] = Color.Red;
