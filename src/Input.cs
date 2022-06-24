@@ -15,21 +15,21 @@ namespace Pipoga
         const int KEYS_ENUM_MAX = 254 + 1; // Starts from zero (0)
         public bool[] released;
 
-        KeyboardState keyboardState;
+        KeyboardState _keyboardState;
         List<IObserver<Input>> _observers;
 
 
         // Forms a vector from WASD-keys (usually for character movement)
         public Vector2 WASD()
         {
-            float x = this.keyboardState[Keys.A] == KeyState.Down
+            float x = this._keyboardState[Keys.A] == KeyState.Down
                       ? -1f : 0f;
-            x += this.keyboardState[Keys.D] == KeyState.Down
+            x += this._keyboardState[Keys.D] == KeyState.Down
                  ? 1f : 0f;
 
-            float y = this.keyboardState[Keys.W] == KeyState.Down
+            float y = this._keyboardState[Keys.W] == KeyState.Down
                       ? -1f : 0f;
-            y += this.keyboardState[Keys.S] == KeyState.Down
+            y += this._keyboardState[Keys.S] == KeyState.Down
                  ? 1f : 0f;
 
             return NormalizedDir(x, y);
@@ -38,14 +38,14 @@ namespace Pipoga
         // Forms a vector from arrow keys (pretty much same as WASD)
         public Vector2 Arrows()
         {
-            float x = this.keyboardState[Keys.Left] == KeyState.Down
+            float x = this._keyboardState[Keys.Left] == KeyState.Down
                       ? -1f : 0f;
-            x += this.keyboardState[Keys.Right] == KeyState.Down
+            x += this._keyboardState[Keys.Right] == KeyState.Down
                  ? 1f : 0f;
 
-            float y = this.keyboardState[Keys.Up] == KeyState.Down
+            float y = this._keyboardState[Keys.Up] == KeyState.Down
                       ? -1f : 0f;
-            y += this.keyboardState[Keys.Down] == KeyState.Down
+            y += this._keyboardState[Keys.Down] == KeyState.Down
                  ? 1f : 0f;
 
             return NormalizedDir(x, y);
@@ -80,7 +80,7 @@ namespace Pipoga
 
         public void Update()
         {
-            keyboardState = Keyboard.GetState();
+            _keyboardState = Keyboard.GetState();
 
             var mouseState =
                 Microsoft.Xna.Framework.Input.Mouse.GetState();
@@ -113,7 +113,7 @@ namespace Pipoga
         /// </returns>
         public bool WasKeyDown(Keys key)
         {
-            return WasInputDown((uint)key, keyboardState.IsKeyDown(key));
+            return WasInputDown((uint)key, _keyboardState.IsKeyDown(key));
         }
 
         /// <summary>
@@ -148,7 +148,26 @@ namespace Pipoga
 
         public bool IsKeyDown(Keys key)
         {
-            return keyboardState.IsKeyDown(key);
+            return _keyboardState.IsKeyDown(key);
+        }
+
+        /// <summary>
+        /// Check for the current states of multiple (TODO? ordered) keys.
+        /// </summary>
+        /// <param name="Keys">
+        /// The keys to check for. The second item (bool) marks the "type" of
+        /// state to check for with true meaning "IsDown" and false meaning
+        /// "WasDown".
+        /// </param>
+        /// <returns>True, if the keys are in their required state.</returns>
+        public bool IsKeyCom(params (Keys, bool)[] keys)
+        {
+            bool result = true;
+            foreach (var (key, isDown) in keys)
+            {
+                result &= isDown ? IsKeyDown(key) : WasKeyDown(key);
+            }
+            return result;
         }
 
         private void NotifyObservers()

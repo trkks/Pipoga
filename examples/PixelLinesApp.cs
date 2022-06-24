@@ -174,21 +174,16 @@ namespace Pipoga.Examples
                 Exit();
             }
 
-            // TODO Ctrl-Z should work so, that only Ctrl -> Z works, but the
-            // other way around (ie. Z first and then Ctrl) doesn't
-            // (Input.OrderedKeyCombination(Keys[]) or smth).
             // TODO Implement a timer on keypress so that Ctrl-Z (and others)
             // could be input multiple times by holding down.
-            if (input.IsKeyDown(Keys.LeftControl) && input.WasKeyDown(Keys.Z))
+            if (input.IsKeyCom((Keys.LeftControl, true), (Keys.Z, false)))
             {
                 PixelLinesApp.UndoLineDraw(this);
             }
-            if (input.IsKeyDown(Keys.LeftControl) && input.WasKeyDown(Keys.Y))
+            if (input.IsKeyCom((Keys.LeftControl, true), (Keys.Y, false)))
             {
                 PixelLinesApp.RedoLineDraw(this);
             }
-            // TODO Implement `KeyCombinationPressed` or smth method on Input
-            // for Ctrl-Z and other common keyboard inputs.
 
             mouseOnScreen = screen.ToScreenPos(input.Mouse.position);
         }
