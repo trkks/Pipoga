@@ -86,18 +86,13 @@ namespace Pipoga.Examples
                 new Button(new Point(20, 20), new Point(150, 50),
                     (b) => primedActions.Enqueue(
                         (app) => {
-                            if (app.lastLineHandle > 0)
-                            {
-                                // "Undo" the previous line-draw.
-                                app.lastLineHandle--;
-                            }
-                            else
+                            if (!PixelLinesApp.UndoLineDraw(app))
                             {
                                 b.BackgroundColor = Color.Lerp(
                                     Color.Gray,
                                     b.BackgroundColor,
                                     0.5f
-                                );;
+                                );
                             }
                         }
                     ),
@@ -106,12 +101,7 @@ namespace Pipoga.Examples
                 new Button(new Point(180, 20), new Point(150, 50),
                     (b) => primedActions.Enqueue(
                         (app) => {
-                            if (app.lastLineHandle < app.lines.Count)
-                            {
-                                // "Redo" the previous line-draw.
-                                app.lastLineHandle++;
-                            }
-                            else
+                            if (!PixelLinesApp.RedoLineDraw(app))
                             {
                                 b.BackgroundColor = Color.Lerp(
                                     Color.Gray,
@@ -125,6 +115,28 @@ namespace Pipoga.Examples
                 )
             };
             gui.AddRange(buttons);
+        }
+
+        static bool RedoLineDraw(PixelLinesApp app)
+        {
+            if (app.lastLineHandle < app.lines.Count)
+            {
+                // "Redo" the previous line-draw.
+                app.lastLineHandle++;
+                return true;
+            }
+            return false;
+        }
+
+        static bool UndoLineDraw(PixelLinesApp app)
+        {
+            if (app.lastLineHandle > 0)
+            {
+                // "Undo" the previous line-draw.
+                app.lastLineHandle--;
+                return true;
+            }
+            return false;
         }
 
         protected override void Update(GameTime gameTime)
@@ -162,6 +174,19 @@ namespace Pipoga.Examples
                 Exit();
             }
 
+            // TODO Ctrl-Z should work so, that only Ctrl -> Z works, but the
+            // other way around (ie. Z first and then Ctrl) doesn't
+            // (Input.OrderedKeyCombination(Keys[]) or smth).
+            // TODO Implement a timer on keypress so that Ctrl-Z (and others)
+            // could be input multiple times by holding down.
+            if (input.IsKeyDown(Keys.LeftControl) && input.WasKeyDown(Keys.Z))
+            {
+                PixelLinesApp.UndoLineDraw(this);
+            }
+            if (input.IsKeyDown(Keys.LeftControl) && input.WasKeyDown(Keys.Y))
+            {
+                PixelLinesApp.RedoLineDraw(this);
+            }
             // TODO Implement `KeyCombinationPressed` or smth method on Input
             // for Ctrl-Z and other common keyboard inputs.
 
