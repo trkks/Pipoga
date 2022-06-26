@@ -17,8 +17,8 @@ namespace Pipoga.Examples
         Input input;
 
         PixelDisplay screen;
-        List<Line> lines;
-        int lastLineHandle;
+        List<IRasterizable> objects;
+        int lastObjectHandle;
         // Unordered collection of actions to run once during the simulation.
         Queue<Action<PixelLinesApp>> primedActions;
 
@@ -27,7 +27,6 @@ namespace Pipoga.Examples
 
         Point lineDrawStart;
         Line lineBeingDrawn;
-        Circle exampleCircle;
 
         public PixelLinesApp(string[] args)
         {
@@ -50,10 +49,8 @@ namespace Pipoga.Examples
 
             input = new Input();
 
-            lines = new List<Line>(0xff);
+            objects = new List<IRasterizable>(0xff);
             primedActions = new Queue<Action<PixelLinesApp>>(0xff);
-
-            exampleCircle = new Circle(50f, new Vector2(200, 250));
         }
 
         protected override void Initialize()
@@ -89,7 +86,7 @@ namespace Pipoga.Examples
                 new Button(new Point(20, 20), new Point(150, 50),
                     (b) => primedActions.Enqueue(
                         (app) => {
-                            if (!PixelLinesApp.UndoLineDraw(app))
+                            if (!PixelLinesApp.UndoAddObject(app))
                             {
                                 b.BackgroundColor = Color.Lerp(
                                     Color.Gray,
@@ -104,7 +101,7 @@ namespace Pipoga.Examples
                 new Button(new Point(180, 20), new Point(150, 50),
                     (b) => primedActions.Enqueue(
                         (app) => {
-                            if (!PixelLinesApp.RedoLineDraw(app))
+                            if (!PixelLinesApp.RedoAddObject(app))
                             {
                                 b.BackgroundColor = Color.Lerp(
                                     Color.Gray,
@@ -120,23 +117,23 @@ namespace Pipoga.Examples
             gui.AddRange(buttons);
         }
 
-        static bool RedoLineDraw(PixelLinesApp app)
+        static bool RedoAddObject(PixelLinesApp app)
         {
-            if (app.lastLineHandle < app.lines.Count)
+            if (app.lastObjectHandle < app.objects.Count)
             {
-                // "Redo" the previous line-draw.
-                app.lastLineHandle++;
+                // "Redo" the previous addition of an object.
+                app.lastObjectHandle++;
                 return true;
             }
             return false;
         }
 
-        static bool UndoLineDraw(PixelLinesApp app)
+        static bool UndoAddObject(PixelLinesApp app)
         {
-            if (app.lastLineHandle > 0)
+            if (app.lastObjectHandle > 0)
             {
-                // "Undo" the previous line-draw.
-                app.lastLineHandle--;
+                // "Undo" the previous addition of an object.
+                app.lastObjectHandle--;
                 return true;
             }
             return false;
@@ -160,11 +157,8 @@ namespace Pipoga.Examples
             // Clear the screen.
             screen.Clear();
 
-            // Draw the example circle for example.
-            screen.Plot(exampleCircle);
-
+            UpdateObjects();
             UpdateLineBeingDrawn();
-            UpdateLines();
             UpdateUI();
 
             base.Update(gameTime);
@@ -184,14 +178,19 @@ namespace Pipoga.Examples
             // could be input multiple times by holding down.
             if (input.IsKeyCom((Keys.LeftControl, true), (Keys.Z, false)))
             {
-                PixelLinesApp.UndoLineDraw(this);
+                PixelLinesApp.UndoAddObject(this);
             }
             if (input.IsKeyCom((Keys.LeftControl, true), (Keys.Y, false)))
             {
-                PixelLinesApp.RedoLineDraw(this);
+                PixelLinesApp.RedoAddObject(this);
             }
 
             mouseOnScreen = screen.ToScreenPos(input.Mouse.position);
+            if (input.Mouse.m2WasDown)
+            {
+                objects.Add(new Circle(50f, input.Mouse.position.ToVector2()));
+                lastObjectHandle++;
+            }
         }
 
         /// <summary>
@@ -226,10 +225,13 @@ namespace Pipoga.Examples
             {
                 // Adding a new line invalidates the redo-stack, and starts a
                 // new "branch" of actions.
-                lines.RemoveRange(lastLineHandle, lines.Count - lastLineHandle);
+                objects.RemoveRange(
+                    lastObjectHandle,
+                    objects.Count - lastObjectHandle
+                );
                 // User has released, so save the line.
-                lines.Add(lineBeingDrawn);
-                lastLineHandle++;
+                objects.Add(lineBeingDrawn);
+                lastObjectHandle++;
 
                 lineBeingDrawn = null;
             }
@@ -238,14 +240,18 @@ namespace Pipoga.Examples
         /// <summary>
         /// Re-"draw" the lines that user has already drawn on the screen.
         /// </summary>
-        void UpdateLines()
+        void UpdateObjects()
         {
-            for (int i = 0; i < lastLineHandle; i++)
+            for (int i = 0; i < lastObjectHandle; i++)
             {
-                var line = lines[i];
-                screen.Plot(line);
+                var obj = objects[i];
+                screen.Plot(obj);
+
                 // Keep coloring the starting pixel of the lines.
-                screen[line.start.ToPoint()] = Color.Red;
+                if (obj is Line)
+                {
+                    screen[((Line)obj).start.ToPoint()] = Color.Red;
+                }
             }
         }
 
