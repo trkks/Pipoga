@@ -27,6 +27,7 @@ namespace Pipoga.Examples
 
         Point lineDrawStart;
         Line lineBeingDrawn;
+        Circle exampleCircle;
 
         public PixelLinesApp(string[] args)
         {
@@ -51,6 +52,8 @@ namespace Pipoga.Examples
 
             lines = new List<Line>(0xff);
             primedActions = new Queue<Action<PixelLinesApp>>(0xff);
+
+            exampleCircle = new Circle(50f, new Vector2(200, 250));
         }
 
         protected override void Initialize()
@@ -156,6 +159,9 @@ namespace Pipoga.Examples
 
             // Clear the screen.
             screen.Clear();
+
+            // Draw the example circle for example.
+            screen.Plot(exampleCircle);
 
             UpdateLineBeingDrawn();
             UpdateLines();
