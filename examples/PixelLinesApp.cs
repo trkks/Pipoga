@@ -188,6 +188,10 @@ namespace Pipoga.Examples
             mouseOnScreen = screen.ToScreenPos(input.Mouse.position);
             if (input.Mouse.m2WasDown)
             {
+                objects.RemoveRange(
+                    lastObjectHandle,
+                    objects.Count - lastObjectHandle
+                );
                 objects.Add(new Circle(50f, input.Mouse.position.ToVector2()));
                 lastObjectHandle++;
             }
