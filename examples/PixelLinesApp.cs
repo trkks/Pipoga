@@ -27,6 +27,7 @@ namespace Pipoga.Examples
 
         Point lineDrawStart;
         Line lineBeingDrawn;
+        float circleRadius;
 
         public PixelLinesApp(string[] args)
         {
@@ -51,6 +52,8 @@ namespace Pipoga.Examples
 
             objects = new List<IRasterizable>(0xff);
             primedActions = new Queue<Action<PixelLinesApp>>(0xff);
+
+            circleRadius = 50f;
         }
 
         protected override void Initialize()
@@ -83,6 +86,7 @@ namespace Pipoga.Examples
             );
             gui = new Gui(cursor, input);
             var buttons = new List<Button> {
+                // Undo-button.
                 new Button(new Point(20, 20), new Point(150, 50),
                     (b) => primedActions.Enqueue(
                         (app) => {
@@ -98,6 +102,7 @@ namespace Pipoga.Examples
                     ),
                     Color.Pink, Color.Red
                 ),
+                // Redo-button.
                 new Button(new Point(180, 20), new Point(150, 50),
                     (b) => primedActions.Enqueue(
                         (app) => {
@@ -112,7 +117,21 @@ namespace Pipoga.Examples
                         }
                     ),
                     Color.LightGreen, Color.Green
-                )
+                ),
+                // Button for increasing circle radius.
+                new Button(new Point(20, 90), new Point(50, 25),
+                    (b) => primedActions.Enqueue(
+                        (app) => { app.circleRadius += 10; }
+                    ),
+                    Color.Blue, Color.Gray
+                ),
+                // Button for decreasing circle radius.
+                new Button(new Point(20, 130), new Point(50, 25),
+                    (b) => primedActions.Enqueue(
+                        (app) => { app.circleRadius -= 10; }
+                    ),
+                    Color.LightBlue, Color.Gray
+                ),
             };
             gui.AddRange(buttons);
         }
@@ -192,7 +211,9 @@ namespace Pipoga.Examples
                     lastObjectHandle,
                     objects.Count - lastObjectHandle
                 );
-                objects.Add(new Circle(50f, input.Mouse.position.ToVector2()));
+                objects.Add(
+                    new Circle(circleRadius, input.Mouse.position.ToVector2())
+                );
                 lastObjectHandle++;
             }
         }
