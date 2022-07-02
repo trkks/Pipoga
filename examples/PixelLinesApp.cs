@@ -17,8 +17,7 @@ namespace Pipoga.Examples
         Input input;
 
         PixelDisplay screen;
-        List<IRasterizable> objects;
-        int lastObjectHandle;
+        UndoStack<IRasterizable> undoStack;
         // Unordered collection of actions to run once during the simulation.
         Queue<Action<PixelLinesApp>> primedActions;
 
@@ -50,7 +49,7 @@ namespace Pipoga.Examples
 
             input = new Input();
 
-            objects = new List<IRasterizable>(0xff);
+            undoStack = new UndoStack<IRasterizable>(0xff);
             primedActions = new Queue<Action<PixelLinesApp>>(0xff);
 
             circleRadius = 50f;
@@ -90,7 +89,7 @@ namespace Pipoga.Examples
                 new Button(new Point(20, 20), new Point(150, 50),
                     (b) => primedActions.Enqueue(
                         (app) => {
-                            if (!PixelLinesApp.UndoAddObject(app))
+                            if (!app.undoStack.Undo())
                             {
                                 b.BackgroundColor = Color.Lerp(
                                     Color.Gray,
@@ -106,7 +105,7 @@ namespace Pipoga.Examples
                 new Button(new Point(180, 20), new Point(150, 50),
                     (b) => primedActions.Enqueue(
                         (app) => {
-                            if (!PixelLinesApp.RedoAddObject(app))
+                            if (!app.undoStack.Redo())
                             {
                                 b.BackgroundColor = Color.Lerp(
                                     Color.Gray,
@@ -134,28 +133,6 @@ namespace Pipoga.Examples
                 ),
             };
             gui.AddRange(buttons);
-        }
-
-        static bool RedoAddObject(PixelLinesApp app)
-        {
-            if (app.lastObjectHandle < app.objects.Count)
-            {
-                // "Redo" the previous addition of an object.
-                app.lastObjectHandle++;
-                return true;
-            }
-            return false;
-        }
-
-        static bool UndoAddObject(PixelLinesApp app)
-        {
-            if (app.lastObjectHandle > 0)
-            {
-                // "Undo" the previous addition of an object.
-                app.lastObjectHandle--;
-                return true;
-            }
-            return false;
         }
 
         protected override void Update(GameTime gameTime)
@@ -197,24 +174,19 @@ namespace Pipoga.Examples
             // could be input multiple times by holding down.
             if (input.IsKeyCom((Keys.LeftControl, true), (Keys.Z, false)))
             {
-                PixelLinesApp.UndoAddObject(this);
+                undoStack.Undo();
             }
             if (input.IsKeyCom((Keys.LeftControl, true), (Keys.Y, false)))
             {
-                PixelLinesApp.RedoAddObject(this);
+                undoStack.Redo();
             }
 
             mouseOnScreen = screen.ToScreenPos(input.Mouse.position);
             if (input.Mouse.m2WasDown)
             {
-                objects.RemoveRange(
-                    lastObjectHandle,
-                    objects.Count - lastObjectHandle
-                );
-                objects.Add(
+                undoStack.Push(
                     new Circle(circleRadius, input.Mouse.position.ToVector2())
                 );
-                lastObjectHandle++;
             }
         }
 
@@ -248,15 +220,8 @@ namespace Pipoga.Examples
             }
             else if (lineBeingDrawn != null)
             {
-                // Adding a new line invalidates the redo-stack, and starts a
-                // new "branch" of actions.
-                objects.RemoveRange(
-                    lastObjectHandle,
-                    objects.Count - lastObjectHandle
-                );
                 // User has released, so save the line.
-                objects.Add(lineBeingDrawn);
-                lastObjectHandle++;
+                undoStack.Push(lineBeingDrawn);
 
                 lineBeingDrawn = null;
             }
@@ -267,9 +232,8 @@ namespace Pipoga.Examples
         /// </summary>
         void UpdateObjects()
         {
-            for (int i = 0; i < lastObjectHandle; i++)
+            foreach (var obj in undoStack)
             {
-                var obj = objects[i];
                 screen.Plot(obj);
 
                 // Keep coloring the starting pixel of the lines.
