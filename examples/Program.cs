@@ -45,6 +45,7 @@ namespace Pipoga.Examples
             {
                 RunApp(args);
             }
+            // TODO Do not catch just any exception -> study C# exceptions...
             catch (ArgumentException e)
             {
                 // List the possible examples.

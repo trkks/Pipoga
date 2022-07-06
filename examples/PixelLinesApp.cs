@@ -27,6 +27,7 @@ namespace Pipoga.Examples
         Point lineDrawStart;
         Line lineBeingDrawn;
         float circleRadius;
+        Label radiusLabel;
 
         public PixelLinesApp(string[] args)
         {
@@ -53,6 +54,12 @@ namespace Pipoga.Examples
             primedActions = new Queue<Action<PixelLinesApp>>(0xff);
 
             circleRadius = 50f;
+
+            radiusLabel = new Label(
+                circleRadius.ToString(),
+                new Point(20, 20),
+                Color.White
+            );
         }
 
         protected override void Initialize()
@@ -70,16 +77,32 @@ namespace Pipoga.Examples
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // These properties need to be set before drawing.
-            screen.PixelTexture = Content.Load<Texture2D>("pixel");
+            screen.PixelTexture = Content.Load<Texture2D>("Pixel");
+            radiusLabel.Font = new SpriteFont(
+                texture: Content.Load<Texture2D>("FontAscii"),
+                glyphBounds: Enumerable.Range(0, 10)
+                    .Select(i => new Rectangle(i * 10, 0, 10, 10))
+                    .ToList(),
+                cropping: Enumerable.Range(0, 10)
+                    .Select(i => new Rectangle(i * 10, 0, 10, 10))
+                    .ToList(),
+                characters: "0123456789".ToList(),
+                lineSpacing: 10,
+                spacing: 10,
+                kerning: Enumerable.Range(0, 10)
+                    .Select(i => new Vector3(0,0,0))
+                    .ToList(),
+                defaultCharacter: '0'
+            );
 
             // Initialize the GUI.
             var cursor = new Cursor(
                 defaultIcon: new CursorIcon(
-                    Content.Load<Texture2D>("cursor"),
+                    Content.Load<Texture2D>("Cursor"),
                     new Point(1, 1)
                 ),
                 pointer: new CursorIcon(
-                    Content.Load<Texture2D>("cursorHover"),
+                    Content.Load<Texture2D>("CursorHover"),
                     new Point(4, 1)
                 )
             );
@@ -249,8 +272,13 @@ namespace Pipoga.Examples
         /// </summary>
         void UpdateUI()
         {
+            var radAsString = ((int)circleRadius).ToString();
+            radiusLabel.Text = radAsString;
+            System.Console.WriteLine(radAsString);
             // Rendering.
             screen.Plot(gui);
+            // TODO Add the label to GUI instead of rendering it here.
+            screen.Plot(radiusLabel);
         }
 
         protected override void Draw(GameTime gameTime)
