@@ -13,6 +13,7 @@ namespace Pipoga
     public class Gui : IObserver<Input>, IRasterizable
     {
         List<Button> _buttons;
+        List<Label> _labels;
         Cursor _cursor;
 
         public Gui(Cursor cursor, Input input)
@@ -20,6 +21,7 @@ namespace Pipoga
             input.Subscribe(this);
             _cursor = cursor;
             _buttons = new List<Button>(0xff);
+            _labels = new List<Label>(0xff);
         }
 
         /// <summary>
@@ -35,6 +37,22 @@ namespace Pipoga
         public void AddRange(IEnumerable<Button> buttons)
         {
             _buttons.AddRange(buttons);
+        }
+
+        // TODO Generalize these Add(*)-methods into Add(object, IInputListener
+        // | IRasterisable | IOtherEnum) or smth.
+        /// <summary>
+        /// Add a new label to the interface.
+        /// </summary>
+        /// <param name="button">The new label to add to the GUI.</param>
+        public void Add(Label label)
+        {
+            _labels.Add(label);
+        }
+
+        public void AddRange(IEnumerable<Label> labels)
+        {
+            _labels.AddRange(labels);
         }
 
         /// <summary>
@@ -73,6 +91,8 @@ namespace Pipoga
 
         public IEnumerable<Vertex> GetVertices(Vector2 inversePixelSize)
         {
+            // TODO Use a possibly layered/prioritized collection of
+            // IRasterizables to iterate over in a single loop.
             foreach (var button in _buttons)
             {
                 foreach (var vertex in button.GetVertices(inversePixelSize))
@@ -81,6 +101,18 @@ namespace Pipoga
                 }
             }
 
+            // Labels render on top of buttons (because buttons could contain
+            // labels?)
+            foreach (var label in _labels)
+            {
+                foreach (var vertex in label.GetVertices(inversePixelSize))
+                {
+                    yield return vertex;
+                }
+            }
+
+            // Cursor renders on top of everything so that user can see it at
+            // all times.
             foreach (var vertex in _cursor.GetVertices(inversePixelSize))
             {
                 yield return vertex;

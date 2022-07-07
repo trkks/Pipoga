@@ -55,11 +55,6 @@ namespace Pipoga.Examples
 
             circleRadius = 50f;
 
-            radiusLabel = new Label(
-                circleRadius.ToString(),
-                new Point(20, 20),
-                Color.White
-            );
         }
 
         protected override void Initialize()
@@ -78,6 +73,28 @@ namespace Pipoga.Examples
 
             // These properties need to be set before drawing.
             screen.PixelTexture = Content.Load<Texture2D>("Pixel");
+
+            // Initialize the GUI.
+            var cursor = new Cursor(
+                defaultIcon: new CursorIcon(
+                    Content.Load<Texture2D>("Cursor"),
+                    new Point(1, 1)
+                ),
+                pointer: new CursorIcon(
+                    Content.Load<Texture2D>("CursorHover"),
+                    new Point(4, 1)
+                )
+            );
+
+            gui = new Gui(cursor, input);
+
+            // Label to show the current circle radius.
+            radiusLabel = new Label(
+                circleRadius.ToString(),
+                new Point(20, 20),
+                Color.White
+            );
+            // TODO Make this SpriteFont a constant of Gui-class.
             radiusLabel.Font = new SpriteFont(
                 texture: Content.Load<Texture2D>("FontAscii"),
                 glyphBounds: Enumerable.Range(0, 10)
@@ -94,19 +111,8 @@ namespace Pipoga.Examples
                     .ToList(),
                 defaultCharacter: '0'
             );
+            gui.Add(radiusLabel);
 
-            // Initialize the GUI.
-            var cursor = new Cursor(
-                defaultIcon: new CursorIcon(
-                    Content.Load<Texture2D>("Cursor"),
-                    new Point(1, 1)
-                ),
-                pointer: new CursorIcon(
-                    Content.Load<Texture2D>("CursorHover"),
-                    new Point(4, 1)
-                )
-            );
-            gui = new Gui(cursor, input);
             var buttons = new List<Button> {
                 // Undo-button.
                 new Button(new Point(20, 20), new Point(150, 50),
@@ -272,13 +278,10 @@ namespace Pipoga.Examples
         /// </summary>
         void UpdateUI()
         {
-            var radAsString = ((int)circleRadius).ToString();
-            radiusLabel.Text = radAsString;
-            System.Console.WriteLine(radAsString);
+            // TODO Change this into a listener of changes to circleRadius.
+            radiusLabel.Text = ((int)circleRadius).ToString();
             // Rendering.
             screen.Plot(gui);
-            // TODO Add the label to GUI instead of rendering it here.
-            screen.Plot(radiusLabel);
         }
 
         protected override void Draw(GameTime gameTime)

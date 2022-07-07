@@ -12,6 +12,7 @@ namespace Pipoga
         string _text;
         Point _position;
         Color _color;
+
         public SpriteFont Font { get; set; }
         public string Text
         { 
@@ -29,6 +30,7 @@ namespace Pipoga
         public IEnumerable<Vertex> GetVertices(Vector2 inversePixelSize)
         {
             // Get font's pixels as array of colors.
+            // TODO Cache this.
             Texture2D fontTexture = Font.Texture;
             var sprite = new Color[fontTexture.Width * fontTexture.Height];
             fontTexture.GetData(sprite);
@@ -44,8 +46,6 @@ namespace Pipoga
                 // Get the next character's glyph from font. NOTE Uses the
                 // default character if given character is not supported.
                 var glyph = fontGlyphs[c];
-                System.Console.WriteLine(c);
-                System.Console.WriteLine(glyph);
 
                 // Get the character's sprite from the font texture.
                 Rectangle bounds = glyph.BoundsInTexture;
