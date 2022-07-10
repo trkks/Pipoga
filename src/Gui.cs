@@ -12,47 +12,30 @@ namespace Pipoga
     /// </summary>
     public class Gui : IObserver<Input>, IRasterizable
     {
-        List<Button> _buttons;
-        List<Label> _labels;
+        // TODO Separate the elements into IInputListener | IRasterizable |
+        // IOtherEnum or smth.
+        List<IRasterizable> _elements;
         Cursor _cursor;
 
         public Gui(Cursor cursor, Input input)
         {
             input.Subscribe(this);
             _cursor = cursor;
-            _buttons = new List<Button>(0xff);
-            _labels = new List<Label>(0xff);
+            _elements = new List<IRasterizable>(0xff);
         }
 
         /// <summary>
-        /// Add a new button to the interface that listens to input like the
-        /// mouse.
+        /// Add a new element to the interface to visualize.
         /// </summary>
-        /// <param name="button">The new button to add to the GUI.</param>
-        public void Add(Button button)
+        /// <param name="button">The new element to add to the GUI.</param>
+        public void Add(IRasterizable elem)
         {
-            _buttons.Add(button);
+            _elements.Add(elem);
         }
 
-        public void AddRange(IEnumerable<Button> buttons)
+        public void AddRange(IEnumerable<IRasterizable> elems)
         {
-            _buttons.AddRange(buttons);
-        }
-
-        // TODO Generalize these Add(*)-methods into Add(object, IInputListener
-        // | IRasterisable | IOtherEnum) or smth.
-        /// <summary>
-        /// Add a new label to the interface.
-        /// </summary>
-        /// <param name="button">The new label to add to the GUI.</param>
-        public void Add(Label label)
-        {
-            _labels.Add(label);
-        }
-
-        public void AddRange(IEnumerable<Label> labels)
-        {
-            _labels.AddRange(labels);
+            _elements.AddRange(elems);
         }
 
         /// <summary>
@@ -63,9 +46,10 @@ namespace Pipoga
         public bool IsOver(Point point)
         {
             // TODO This feels misleading, as the Cursor is also part of GUI...
-            foreach (var button in _buttons)
+            foreach (var elem in _elements)
             {
-                if (button.Body.ToRectangle().Contains(point))
+                if (elem is Button
+                    && ((Button)elem).Body.ToRectangle().Contains(point))
                 {
                     return true;
                 }
@@ -82,9 +66,12 @@ namespace Pipoga
         public virtual void OnNext(Input input)
         {
             bool isMousePointing = false;
-            foreach (var button in _buttons)
+            foreach (var elem in _elements)
             {
-                isMousePointing |= button.Update(input.Mouse);
+                if (elem is Button)
+                {
+                    isMousePointing |= ((Button)elem).Update(input.Mouse);
+                }
             }
             _cursor.Update(input.Mouse, isMousePointing);
         }
@@ -92,20 +79,12 @@ namespace Pipoga
         public IEnumerable<Vertex> GetVertices(Vector2 inversePixelSize)
         {
             // TODO Use a possibly layered/prioritized collection of
-            // IRasterizables to iterate over in a single loop.
-            foreach (var button in _buttons)
+            //  IRasterizables to iterate over in a single loop.
+            //  For example labels render on top of buttons (because buttons
+            //  could contain labels?)
+            foreach (var elem in _elements)
             {
-                foreach (var vertex in button.GetVertices(inversePixelSize))
-                {
-                    yield return vertex;
-                }
-            }
-
-            // Labels render on top of buttons (because buttons could contain
-            // labels?)
-            foreach (var label in _labels)
-            {
-                foreach (var vertex in label.GetVertices(inversePixelSize))
+                foreach (var vertex in elem.GetVertices(inversePixelSize))
                 {
                     yield return vertex;
                 }
