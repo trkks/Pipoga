@@ -26,7 +26,7 @@ namespace Pipoga.Examples
 
         Point lineDrawStart;
         Line lineBeingDrawn;
-        float circleRadius;
+        Slider circleRadiusSlider;
         Label radiusLabel;
 
         public PixelLinesApp(string[] args)
@@ -53,8 +53,12 @@ namespace Pipoga.Examples
             undoStack = new UndoStack<IRasterizable>(0xff);
             primedActions = new Queue<Action<PixelLinesApp>>(0xff);
 
-            circleRadius = 50f;
-
+            circleRadiusSlider = new Slider(
+                min: 10,
+                max: 100,
+                body: new Rectangle(100, 150, 300, 150)
+            );
+            circleRadiusSlider.Value = 50;
         }
 
         protected override void Initialize()
@@ -87,31 +91,6 @@ namespace Pipoga.Examples
             );
 
             gui = new Gui(cursor, input);
-
-            // Label to show the current circle radius.
-            radiusLabel = new Label(
-                circleRadius.ToString(),
-                new Point(20, 20),
-                Color.White
-            );
-            // TODO Make this SpriteFont a constant of Gui-class.
-            radiusLabel.Font = new SpriteFont(
-                texture: Content.Load<Texture2D>("FontAscii"),
-                glyphBounds: Enumerable.Range(0, 10)
-                    .Select(i => new Rectangle(i * 10, 0, 10, 10))
-                    .ToList(),
-                cropping: Enumerable.Range(0, 10)
-                    .Select(i => new Rectangle(i * 10, 0, 10, 10))
-                    .ToList(),
-                characters: "0123456789".ToList(),
-                lineSpacing: 10,
-                spacing: 10,
-                kerning: Enumerable.Range(0, 10)
-                    .Select(i => new Vector3(0,0,0))
-                    .ToList(),
-                defaultCharacter: '0'
-            );
-            gui.Add(radiusLabel);
 
             var buttons = new List<Button> {
                 // Undo-button.
@@ -149,19 +128,46 @@ namespace Pipoga.Examples
                 // Button for increasing circle radius.
                 new Button(new Point(20, 90), new Point(50, 25),
                     (b) => primedActions.Enqueue(
-                        (app) => { app.circleRadius += 10; }
+                        (app) => { app.circleRadiusSlider.Value += 10; }
                     ),
                     Color.Blue, Color.Gray
                 ),
                 // Button for decreasing circle radius.
                 new Button(new Point(20, 130), new Point(50, 25),
                     (b) => primedActions.Enqueue(
-                        (app) => { app.circleRadius -= 10; }
+                        (app) => { app.circleRadiusSlider.Value -= 10; }
                     ),
                     Color.LightBlue, Color.Gray
                 ),
             };
             gui.AddRange(buttons);
+
+            // Label to show the current circle radius.
+            radiusLabel = new Label(
+                circleRadiusSlider.Value.ToString(),
+                new Point(20, 20),
+                Color.White
+            );
+            // TODO Make this SpriteFont a constant of Gui-class.
+            radiusLabel.Font = new SpriteFont(
+                texture: Content.Load<Texture2D>("FontAscii"),
+                glyphBounds: Enumerable.Range(0, 10)
+                    .Select(i => new Rectangle(i * 10, 0, 10, 10))
+                    .ToList(),
+                cropping: Enumerable.Range(0, 10)
+                    .Select(i => new Rectangle(i * 10, 0, 10, 10))
+                    .ToList(),
+                characters: "0123456789".ToList(),
+                lineSpacing: 10,
+                spacing: 10,
+                kerning: Enumerable.Range(0, 10)
+                    .Select(i => new Vector3(0,0,0))
+                    .ToList(),
+                defaultCharacter: '0'
+            );
+            gui.Add(radiusLabel);
+
+            gui.Add(circleRadiusSlider);
         }
 
         protected override void Update(GameTime gameTime)
@@ -214,7 +220,10 @@ namespace Pipoga.Examples
             if (input.Mouse.m2WasDown)
             {
                 undoStack.Push(
-                    new Circle(circleRadius, input.Mouse.position.ToVector2())
+                    new Circle(
+                        circleRadiusSlider.Value,
+                        input.Mouse.position.ToVector2()
+                    )
                 );
             }
         }
@@ -279,7 +288,7 @@ namespace Pipoga.Examples
         void UpdateUI()
         {
             // TODO Change this into a listener of changes to circleRadius.
-            radiusLabel.Text = ((int)circleRadius).ToString();
+            radiusLabel.Text = ((int)circleRadiusSlider.Value).ToString();
             // Rendering.
             screen.Plot(gui);
         }

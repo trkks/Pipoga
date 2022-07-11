@@ -22,6 +22,7 @@ namespace Pipoga
         /// better for that if ever needed.
         /// </summary>
         public RectangleBody Body { get; private set; }
+        public Point Size { get => Body.size.ToPoint(); } // TODO Blehh..
         public Color BackgroundColor { get; set; }
         public Color ForegroundColor { get; set; }
 
@@ -139,6 +140,11 @@ namespace Pipoga
         void OnClick()
         {
             callback(this);
+        }
+
+        public void SetPosition(Point t)
+        {
+            Body.position = t.ToVector2();
         }
     }
 }

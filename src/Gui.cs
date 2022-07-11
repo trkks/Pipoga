@@ -68,10 +68,13 @@ namespace Pipoga
             bool isMousePointing = false;
             foreach (var elem in _elements)
             {
-                if (elem is Button)
-                {
-                    isMousePointing |= ((Button)elem).Update(input.Mouse);
-                }
+                // TODO Make some UI-elements IFocusable or smth.
+                isMousePointing |=
+                    elem is Button
+                    ? ((Button)elem).Update(input.Mouse)
+                    : elem is Slider
+                    ? ((Slider)elem).Update(input.Mouse)
+                    : false;
             }
             _cursor.Update(input.Mouse, isMousePointing);
         }
