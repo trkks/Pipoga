@@ -7,6 +7,8 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Pipoga
 {
+    using XnaRect = Microsoft.Xna.Framework.Rectangle;
+
     public class Animations
     {
         // Maps an integer to the frame of an animation (a rectangle to a
@@ -47,15 +49,15 @@ namespace Pipoga
         /// The animation frames located on source atlas ordered from left to
         /// right, top to bottom.
         /// </returns>
-        public static Rectangle[] FramesFrom(Point spriteSize, Point atlasSize)
+        public static XnaRect[] FramesFrom(Point spriteSize, Point atlasSize)
         {
-            var atlasMask = new Rectangle(Point.Zero, spriteSize);
+            var atlasMask = new XnaRect(Point.Zero, spriteSize);
             int frameCount = atlasSize.X / spriteSize.X
                              * atlasSize.Y / spriteSize.Y;
-            var result = new Rectangle[frameCount];
+            var result = new XnaRect[frameCount];
 
             // Add first frame
-            result[0] = new Rectangle(atlasMask.Location, atlasMask.Size);
+            result[0] = new XnaRect(atlasMask.Location, atlasMask.Size);
 
             // Sample through the atlas by sprite size:
             for (int i = 1; i < frameCount; i++)
@@ -88,7 +90,7 @@ namespace Pipoga
                 }
 
                 // Add the frame
-                result[i] = new Rectangle(atlasMask.Location, atlasMask.Size);
+                result[i] = new XnaRect(atlasMask.Location, atlasMask.Size);
             }
             return result;
         }

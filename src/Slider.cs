@@ -48,11 +48,11 @@ namespace Pipoga
             Body = body;
 
             // TODO Calculate the width based on body size as well.
-            var slideSize = new Point(20, (int)(Body.Height * 0.8));
+            var slideSize = new Point(20, (int)(Body.H * 0.8));
             // Position in the middle of the body's rectangle.
             var slidePos = new Point(
-                Body.X + (int)(Body.Width * 0.5 - slideSize.X * 0.5),
-                Body.Y + (int)((Body.Height - slideSize.Y) * 0.5)
+                (int)(Body.X + Body.W * 0.5f - slideSize.X * 0.5f),
+                (int)(Body.Y + Body.H - slideSize.Y * 0.5f)
             );
             _slide = new Button(
                 slidePos,
@@ -74,23 +74,23 @@ namespace Pipoga
         /// <param name="mouse">State of the mouse.</param>
         public bool Update(MouseState mouse)
         {
-            if (Body.Contains(mouse.position))
+            if (Body.Contains(mouse.position.ToVector2()))
             {
                 if (_grabbed && mouse.m1IsDown)
                 {
                     // Set and constrain the value by mouse position along this
                     // slider's axis. TODO Support vertical axis.
                     Value = Math.Clamp(
-                        (Body.Center - mouse.position).X,
+                        (Body.Center().ToPoint() - mouse.position).X,
                         _min,
                         _max
                     );
                     // Move the slide according to the current value relative
                     // to the slider's middlepoint.
                     _slide.SetPosition(new Point(
-                        Body.X + (int)(Body.Width * 0.5 - _slide.Size.X * 0.5)
+                        (int)(Body.X + Body.W * 0.5f - _slide.Size.X * 0.5f)
                             - Value,
-                        Body.Y + (int)((Body.Height - _slide.Size.Y) * 0.5)
+                        (int)(Body.Y + Body.H - _slide.Size.Y * 0.5f)
                     ));
                 }
                 else
@@ -103,45 +103,9 @@ namespace Pipoga
 
         public IEnumerable<Vertex> GetVertices(Vector2 inversePixelSize)
         {
-            // First the rectangle inside.
-            // The buttons are rectangles (at least for now).
-            var r = new Rectangle(
-                (Body.Location.ToVector2() * inversePixelSize).ToPoint(),
-                (Body.Size.ToVector2() * inversePixelSize).ToPoint()
-            );
-            for (int i = 0; i < r.Height; i++)
+            foreach (var vertex in Body.GetVertices(inversePixelSize))
             {
-                int y = r.Y + i;
-                for (int j = 0; j < r.Width; j++)
-                {
-                    int x = r.X + j;
-                    yield return new Vertex(x, y, BackgroundColor);
-                }
-            }
-
-            // TODO Using this for the properties feels stupid...
-            var rb = new RectangleBody(r);
-
-            // Then the borders.
-            foreach (var line in Enumerable.Select(
-                new[] {
-                    (rb.TopLeft,     rb.TopRight),
-                    (rb.TopRight,    rb.BottomRight),
-                    (rb.BottomRight, rb.BottomLeft),
-                    (rb.BottomLeft,  rb.TopLeft),
-                },
-                t => new Line(t.Item1, t.Item2)
-            ))
-            {
-                // NOTE This pattern of unwrapping the iterator is dumb and C#
-                // is dumb >:(
-                foreach (var x in line.GetVertices(inversePixelSize).Select(
-                    // TODO Implement style for Line, which contains coloring.
-                    v => new Vertex(v.X, v.Y, ForegroundColor)
-                ))
-                {
-                    yield return x;
-                }
+                yield return vertex;
             }
 
             foreach (var vertex in _slide.GetVertices(inversePixelSize))

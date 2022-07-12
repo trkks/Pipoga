@@ -6,59 +6,85 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Pipoga
 {
-    public class RectangleBody
+    public class Rectangle : IRasterizable, IArea
     {
-        public Vector2 size;
-        public Vector2 position;
+        public Vector2 Size { get; set; }
+        public Vector2 Position { get; set; }
 
-        public float X => position.X;
-        public float Y => position.Y;
-        public float W => size.X;
-        public float H => size.Y;
-        public Vector2 TopLeft     => position;
-        public Vector2 TopRight    => position + new Vector2(W - 1, 0);
-        public Vector2 BottomRight => position + size - Vector2.One;
-        public Vector2 BottomLeft  => position + new Vector2(0, H - 1);
+        public float X => Position.X;
+        public float Y => Position.Y;
+        public float W => Size.X;
+        public float H => Size.Y;
 
-        public RectangleBody(Vector2 position, Vector2 size)
+        // Top.
+        public Vector2 TLeft  => Position;
+        public Vector2 TRight => Position + Vector2.UnitX * W;
+        // Bottom.
+        public Vector2 BRight => Position + Size;
+        public Vector2 BLeft  => Position + Vector2.UnitY * H;
+
+        public Rectangle(Vector2 position, Vector2 size)
         {
-            this.size = size;
-            this.position = position;
+            Size = size;
+            Position = position;
         }
 
-        public RectangleBody(float x, float y, float width, float height)
+        public Rectangle(float x, float y, float width, float height)
         {
-            this.size = new Vector2(width, height);
-            this.position = new Vector2(x, y);
+            Size = new Vector2(width, height);
+            Position = new Vector2(x, y);
         }
 
-        public RectangleBody(Rectangle rect)
+        public Rectangle(Microsoft.Xna.Framework.Rectangle rect)
         {
-            size = rect.Size.ToVector2();
-            position = rect.Location.ToVector2();
+            Size = rect.Size.ToVector2();
+            Position = rect.Location.ToVector2();
         }
 
-        public bool Colliding(RectangleBody target)
+        public bool Colliding(Rectangle target)
         {
-            return position.X + size.X >= target.position.X &&
-                   position.Y + size.Y >= target.position.Y &&
-                   position.X <= target.position.X + target.size.X &&
-                   position.Y <= target.position.Y + target.size.Y;
+            return Position.X + Size.X >= target.Position.X &&
+                   Position.Y + Size.Y >= target.Position.Y &&
+                   Position.X <= target.Position.X + target.Size.X &&
+                   Position.Y <= target.Position.Y + target.Size.Y;
         }
 
         public Vector2 Center()
         {
-            return position + size * 0.5f;
+            return Position + Size * 0.5f;
         }
 
         public override string ToString()
         {
-            return "size: " + size + " pos: " + position;
+            return "Size: " + Size + " pos: " + Position;
         }
 
-        public Rectangle ToRectangle()
+        public Microsoft.Xna.Framework.Rectangle ToXnaRectangle()
         {
-            return new Rectangle(position.ToPoint(), size.ToPoint());
+            return new Microsoft.Xna.Framework.Rectangle(
+                Position.ToPoint(), Size.ToPoint()
+            );
+        }
+
+        public bool Contains(Vector2 p)
+        {
+            return X <= p.X && Y <= p.Y && p.X <= X + W && p.Y <= Y + H;
+        }
+
+        public IEnumerable<Vertex> GetVertices(Vector2 inversePixelSize)
+        {
+            var pos = (Position * inversePixelSize).ToPoint();
+            var size = (Size * inversePixelSize).ToPoint();
+
+            for (int i = 0; i < size.Y; i++)
+            {
+                int y = pos.Y + i;
+                for (int j = 0; j < size.X; j++)
+                {
+                    int x = pos.X + j;
+                    yield return new Vertex(x, y, Color.White);
+                }
+            }
         }
     }
 }

@@ -10,6 +10,8 @@ using Pipoga;
 
 namespace Pipoga.Examples
 {
+    using XnaRect = Microsoft.Xna.Framework.Rectangle;
+
     public class PixelLinesApp : Game
     {
         GraphicsDeviceManager graphics;
@@ -152,10 +154,10 @@ namespace Pipoga.Examples
             radiusLabel.Font = new SpriteFont(
                 texture: Content.Load<Texture2D>("FontAscii"),
                 glyphBounds: Enumerable.Range(0, 10)
-                    .Select(i => new Rectangle(i * 10, 0, 10, 10))
+                    .Select(i => new XnaRect(i * 10, 0, 10, 10))
                     .ToList(),
                 cropping: Enumerable.Range(0, 10)
-                    .Select(i => new Rectangle(i * 10, 0, 10, 10))
+                    .Select(i => new XnaRect(i * 10, 0, 10, 10))
                     .ToList(),
                 characters: "0123456789".ToList(),
                 lineSpacing: 10,

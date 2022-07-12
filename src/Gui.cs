@@ -49,7 +49,7 @@ namespace Pipoga
             foreach (var elem in _elements)
             {
                 if (elem is Button
-                    && ((Button)elem).Body.ToRectangle().Contains(point))
+                    && ((Button)elem).Body.Contains(point.ToVector2()))
                 {
                     return true;
                 }

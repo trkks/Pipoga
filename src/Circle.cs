@@ -8,15 +8,20 @@ using Pipoga;
 
 namespace Pipoga
 {
-    public class Circle : IRasterizable
+    public class Circle : IRasterizable, IArea
     {
-        public float radius;
-        public Vector2 center;
-        
+        public float _radius;
+        public Vector2 _center;
+
         public Circle(float radius, Vector2 center)
         {
-            this.radius = radius;
-            this.center = center;
+            _radius = radius;
+            _center = center;
+        }
+
+        public bool Contains(Vector2 p)
+        {
+            return (p - _center).Length() <= _radius;
         }
 
         /// <summary>
@@ -27,8 +32,8 @@ namespace Pipoga
         {
             // TODO Scaling only based on X-component does not work with
             // non-square pixels.
-            int pixelRadius = (int)(inversePixelSize.X * radius);
-            Point translation = (center * inversePixelSize).ToPoint();
+            int pixelRadius = (int)(inversePixelSize.X * _radius);
+            Point translation = (_center * inversePixelSize).ToPoint();
 
             // Generate one octant (1/8) of the circle.
             // Move counter-clockwise starting from the

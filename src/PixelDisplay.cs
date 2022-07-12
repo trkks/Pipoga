@@ -6,6 +6,8 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Pipoga
 {
+    using XnaRect = Microsoft.Xna.Framework.Rectangle;
+
     /// <summary>
     /// A grid of pixels to set with colors. Could be used in some emulation?
     /// </summary>
@@ -130,10 +132,11 @@ namespace Pipoga
             return (pos.ToVector2() * InversePixelSize).ToPoint();
         }
 
-        public Rectangle ToScreenCoords(Rectangle rect)
+        public XnaRect ToScreenCoords(Rectangle rect)
         {
-            return new Rectangle(
-                ToScreenPos(rect.Location), ToScreenPos(rect.Size)
+            return new XnaRect(
+                ToScreenPos(rect.Position.ToPoint()),
+                ToScreenPos(rect.Size.ToPoint())
             );
         }
 

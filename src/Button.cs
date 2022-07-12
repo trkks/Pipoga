@@ -21,8 +21,8 @@ namespace Pipoga
         /// Private setter as not to change at will. Separate methods are
         /// better for that if ever needed.
         /// </summary>
-        public RectangleBody Body { get; private set; }
-        public Point Size { get => Body.size.ToPoint(); } // TODO Blehh..
+        public Rectangle Body { get; private set; }
+        public Point Size { get => Body.Size.ToPoint(); } // TODO Blehh..
         public Color BackgroundColor { get; set; }
         public Color ForegroundColor { get; set; }
 
@@ -39,7 +39,7 @@ namespace Pipoga
             Color? backgroundColor = null,
             Color? foregroundColor = null)
         {
-            Body = new RectangleBody(position.ToVector2(), size.ToVector2());
+            Body = new Rectangle(position.ToVector2(), size.ToVector2());
             callback = onClick ?? (_ => { });
             BackgroundColor = backgroundColor ?? Color.Black;
             ForegroundColor = foregroundColor ?? Color.White;
@@ -51,44 +51,35 @@ namespace Pipoga
 
         public IEnumerable<Vertex> GetVertices(Vector2 inversePixelSize)
         {
+            // Buttons are rectangles (at least for now TODO).
+
             // First the rectangle inside.
-            // The buttons are rectangles (at least for now).
-            var r = new Rectangle(
-                (Body.position * inversePixelSize).ToPoint(),
-                (Body.size * inversePixelSize).ToPoint()
-            );
-            for (int i = 0; i < r.Height; i++)
+            foreach (var v in Body.GetVertices(inversePixelSize))
             {
-                int y = r.Y + i;
-                for (int j = 0; j < r.Width; j++)
-                {
-                    int x = r.X + j;
-                    yield return new Vertex(x, y, BackgroundColor);
-                }
+                yield return new Vertex(v.X, v.Y, BackgroundColor);
             }
 
-            // TODO Using this for the properties feels stupid...
-            var rb = new RectangleBody(r);
-
             // Then the borders.
-            foreach (var line in Enumerable.Select(
-                new[] {
-                    (rb.TopLeft,     rb.TopRight),
-                    (rb.TopRight,    rb.BottomRight),
-                    (rb.BottomRight, rb.BottomLeft),
-                    (rb.BottomLeft,  rb.TopLeft),
-                },
-                t => new Line(t.Item1, t.Item2)
-            ))
+            foreach ((Vector2 s, Vector2 e) in new[]
+            {
+                // Right and bottom borders need to be translated to the inside
+                // of the contained rectangle.
+                // To the right,
+                (Body.TLeft,                  Body.TRight - Vector2.UnitX),
+                // down,
+                (Body.TRight - Vector2.UnitX, Body.BRight - Vector2.One),
+                // left,
+                (Body.BRight - Vector2.One,   Body.BLeft - Vector2.UnitY),
+                // and back up. FIXME XXX Bug in drawing the borders... XXX
+                (Body.BLeft - Vector2.UnitY,  Body.TLeft),
+            })
             {
                 // NOTE This pattern of unwrapping the iterator is dumb and C#
                 // is dumb >:(
-                foreach (var x in line.GetVertices(inversePixelSize).Select(
-                    // TODO Implement style for Line, which contains coloring.
-                    v => new Vertex(v.X, v.Y, ForegroundColor)
-                ))
+                foreach (var v in new Line(s * inversePixelSize, e * inversePixelSize).GetVertices(inversePixelSize))
                 {
-                    yield return x;
+                    // TODO Implement style for Line, which contains coloring?
+                    yield return new Vertex(v.X, v.Y, ForegroundColor);
                 }
             }
         }
@@ -101,7 +92,7 @@ namespace Pipoga
         /// <returns>True if the mouse is hovering over the button.</returns>
         public bool Update(MouseState mouse)
         {
-            if (Body.ToRectangle().Contains(mouse.position))
+            if (Body.Contains(mouse.position.ToVector2()))
             {
                 OnHoverEnter();
                 // Mouse clicks are reacted to immediately and only once.
@@ -144,7 +135,7 @@ namespace Pipoga
 
         public void SetPosition(Point t)
         {
-            Body.position = t.ToVector2();
+            Body.Position = t.ToVector2();
         }
     }
 }

@@ -7,6 +7,8 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Pipoga
 {
+    using XnaRect = Microsoft.Xna.Framework.Rectangle;
+
     public class Label : IRasterizable
     {
         string _text;
@@ -48,7 +50,7 @@ namespace Pipoga
                 var glyph = fontGlyphs[c];
 
                 // Get the character's sprite from the font texture.
-                Rectangle bounds = glyph.BoundsInTexture;
+                XnaRect bounds = glyph.BoundsInTexture;
 
                 // Form vertices from the pixels of the sprite.
                 for (int y = 0; y < bounds.Height; y++)
