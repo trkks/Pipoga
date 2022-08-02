@@ -30,6 +30,7 @@ namespace Pipoga.Examples
         Line lineBeingDrawn;
         Slider circleRadiusSlider;
         Label radiusLabel;
+        Rectangle drawArea;
 
         public PixelLinesApp(string[] args)
         {
@@ -54,13 +55,6 @@ namespace Pipoga.Examples
 
             undoStack = new UndoStack<IRasterizable>(0xff);
             primedActions = new Queue<Action<PixelLinesApp>>(0xff);
-
-            circleRadiusSlider = new Slider(
-                min: 10,
-                max: 100,
-                body: new Rectangle(100, 150, 300, 150)
-            );
-            circleRadiusSlider.Value = 50;
         }
 
         protected override void Initialize()
@@ -81,6 +75,24 @@ namespace Pipoga.Examples
             screen.PixelTexture = Content.Load<Texture2D>("Pixel");
 
             // Initialize the GUI.
+            int margin = 10;
+
+            var unredoSize = new Point(50, 35);
+            var undoPos = new Point(25, 25);
+            var redoPos = undoPos + new Point(unredoSize.X + margin, 0);
+
+            var radSize = unredoSize;
+            var radDecPos = undoPos + new Point(0, unredoSize.Y + margin);
+            var radIncPos = radDecPos + new Point(radSize.X + margin, 0);
+
+            var radLabelPos = radIncPos + new Point(radSize.X + margin, 0);
+
+            var radSliderSize = new Point(150, 50);
+            var radSliderPos = radDecPos + new Point(0, radSize.Y + margin);
+
+            var drawAreaPos = new Point(250, 25);
+            var drawAreaSize = new Point(750, 450);
+
             var cursor = new Cursor(
                 defaultIcon: new CursorIcon(
                     Content.Load<Texture2D>("Cursor"),
@@ -96,7 +108,7 @@ namespace Pipoga.Examples
 
             var buttons = new List<Button> {
                 // Undo-button.
-                new Button(new Point(20, 20), new Point(150, 50),
+                new Button(undoPos, unredoSize,
                     (b) => primedActions.Enqueue(
                         (app) => {
                             if (!app.undoStack.Undo())
@@ -112,7 +124,7 @@ namespace Pipoga.Examples
                     Color.Pink, Color.Red
                 ),
                 // Redo-button.
-                new Button(new Point(180, 20), new Point(150, 50),
+                new Button(redoPos, unredoSize,
                     (b) => primedActions.Enqueue(
                         (app) => {
                             if (!app.undoStack.Redo())
@@ -128,14 +140,14 @@ namespace Pipoga.Examples
                     Color.LightGreen, Color.Green
                 ),
                 // Button for increasing circle radius.
-                new Button(new Point(20, 90), new Point(50, 25),
+                new Button(radIncPos, radSize,
                     (b) => primedActions.Enqueue(
                         (app) => { app.circleRadiusSlider.Value += 10; }
                     ),
                     Color.Blue, Color.Gray
                 ),
                 // Button for decreasing circle radius.
-                new Button(new Point(20, 130), new Point(50, 25),
+                new Button(radDecPos, radSize,
                     (b) => primedActions.Enqueue(
                         (app) => { app.circleRadiusSlider.Value -= 10; }
                     ),
@@ -144,10 +156,23 @@ namespace Pipoga.Examples
             };
             gui.AddRange(buttons);
 
+
+            circleRadiusSlider = new Slider(
+                min: 10,
+                max: 100,
+                body: new Rectangle(
+                        radSliderPos.ToVector2(),
+                        radSliderSize.ToVector2()
+                    ),
+                slideAxis: Vector2.UnitY
+            );
+            circleRadiusSlider.Value = 50;
+
+
             // Label to show the current circle radius.
             radiusLabel = new Label(
                 circleRadiusSlider.Value.ToString(),
-                new Point(20, 20),
+                radLabelPos,
                 Color.White
             );
             // TODO Make this SpriteFont a constant of Gui-class.
@@ -170,6 +195,13 @@ namespace Pipoga.Examples
             gui.Add(radiusLabel);
 
             gui.Add(circleRadiusSlider);
+
+
+            drawArea = new Rectangle(
+                drawAreaPos.ToVector2(),
+                drawAreaSize.ToVector2()
+            );
+            drawArea.Color = Color.DarkGray;
         }
 
         protected override void Update(GameTime gameTime)
@@ -187,10 +219,7 @@ namespace Pipoga.Examples
 
             HandleInput();
 
-            // Clear the screen.
-            screen.Clear();
 
-            UpdateObjects();
             UpdateLineBeingDrawn();
             UpdateUI();
 
@@ -235,18 +264,23 @@ namespace Pipoga.Examples
         /// </summary>
         void UpdateLineBeingDrawn()
         {
-            // Only mouse actions happening over the background-canvas are allowed.
-            // TODO Instead of checking against all GUI-elements, implement a
-            // specialized Canvas-element for drawing lines.
-            if (gui.IsOver(input.Mouse.position))
-            {
-                return;
-            }
-
             if (input.Mouse.m1WasDown)
             {
                 lineDrawStart = mouseOnScreen;
             }
+
+            // Only mouse actions happening over the background-canvas are
+            // allowed.
+            if (!drawArea.Contains(input.Mouse.position.ToVector2()))
+            {
+                if (!input.Mouse.m1IsDown)
+                {
+                    // Line gets drawn if mouse is released outside.
+                    CheckStopLineDraw();
+                }
+                return;
+            }
+
             if (input.Mouse.m1IsDown)
             {
                 var end = mouseOnScreen;
@@ -254,33 +288,21 @@ namespace Pipoga.Examples
                     lineDrawStart.ToVector2(),
                     end.ToVector2()
                 );
-                screen.Plot(lineBeingDrawn);
-                // Color the starting pixel for looking more consistent.
-                screen[lineDrawStart] = Color.Red;
             }
-            else if (lineBeingDrawn != null)
+            else
+            {
+                CheckStopLineDraw();
+            }
+        }
+
+        void CheckStopLineDraw()
+        {
+            if (lineBeingDrawn != null)
             {
                 // User has released, so save the line.
                 undoStack.Push(lineBeingDrawn);
 
                 lineBeingDrawn = null;
-            }
-        }
-
-        /// <summary>
-        /// Re-"draw" the lines that user has already drawn on the screen.
-        /// </summary>
-        void UpdateObjects()
-        {
-            foreach (var obj in undoStack)
-            {
-                screen.Plot(obj);
-
-                // Keep coloring the starting pixel of the lines.
-                if (obj is Line)
-                {
-                    screen[((Line)obj).start.ToPoint()] = Color.Red;
-                }
             }
         }
 
@@ -291,12 +313,25 @@ namespace Pipoga.Examples
         {
             // TODO Change this into a listener of changes to circleRadius.
             radiusLabel.Text = ((int)circleRadiusSlider.Value).ToString();
-            // Rendering.
-            screen.Plot(gui);
         }
 
         protected override void Draw(GameTime gameTime)
         {
+            // Draw on the pixel-screen.
+            screen.Clear();
+            // Draw elements in order of layer bottom first.
+            screen.Plot(drawArea);
+            foreach (var x in undoStack)
+            {
+                screen.Plot(x);
+            }
+            if (lineBeingDrawn != null)
+            {
+                screen.Plot(lineBeingDrawn);
+            }
+            screen.Plot(gui);
+
+
             GraphicsDevice.Clear(Color.Black);
 
             spriteBatch.Begin();

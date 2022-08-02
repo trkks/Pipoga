@@ -23,6 +23,8 @@ namespace Pipoga
         public Vector2 BRight => Position + Size;
         public Vector2 BLeft  => Position + Vector2.UnitY * H;
 
+        public Color Color = Color.White;
+
         public Rectangle(Vector2 position, Vector2 size)
         {
             Size = size;
@@ -82,7 +84,7 @@ namespace Pipoga
                 for (int j = 0; j < size.X; j++)
                 {
                     int x = pos.X + j;
-                    yield return new Vertex(x, y, Color.White);
+                    yield return new Vertex(x, y, Color);
                 }
             }
         }

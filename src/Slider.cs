@@ -22,6 +22,7 @@ namespace Pipoga
         // TODO Is this field even needed?
         bool _grabbed;
         Button _slide;
+        Vector2 _slideAxis;
 
         Rectangle Body { get; set; }
 
@@ -30,6 +31,7 @@ namespace Pipoga
             int min,
             int max,
             Rectangle body,
+            Vector2? slideAxis=null,
             int step=1,
             Color? backgroundColor=null,
             Color? foregroundColor=null)
@@ -46,6 +48,7 @@ namespace Pipoga
             _step = step;
             _grabbed = false;
             Body = body;
+            _slideAxis = slideAxis ?? Vector2.UnitX;
 
             // TODO Calculate the width based on body size as well.
             var slideSize = new Point(20, (int)(Body.H * 0.8));

@@ -16,6 +16,8 @@ namespace Pipoga
         public readonly Vector2 diff;
         public readonly float len;
 
+        public Color Color = Color.White;
+
         public Line(Vector2 start, Vector2 end)
         {
             this.start = start;
@@ -114,7 +116,7 @@ namespace Pipoga
             }
             return Enumerable.Select(
                 xys,
-                (t) => { var (x, y) = t; return new Vertex(x, y, Color.White); }
+                (t) => { var (x, y) = t; return new Vertex(x, y, Color); }
             );
         }
 
