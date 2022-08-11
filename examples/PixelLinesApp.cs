@@ -19,7 +19,7 @@ namespace Pipoga.Examples
         Input input;
 
         PixelDisplay screen;
-        UndoStack<IRasterizable> undoStack;
+        UndoStack<List<Vertex>> undoStack;
         // Unordered collection of actions to run once during the simulation.
         Queue<Action<PixelLinesApp>> primedActions;
 
@@ -31,6 +31,7 @@ namespace Pipoga.Examples
         Slider circleRadiusSlider;
         Label radiusLabel;
         Rectangle drawArea;
+        Rectangle drawAreaBorder;
 
         public PixelLinesApp(string[] args)
         {
@@ -38,22 +39,33 @@ namespace Pipoga.Examples
             Content.RootDirectory = "Content";
             IsMouseVisible = false;
 
-            if (args.Length == 3)
-            {
-                var pixelSize = new Point(Int32.Parse(args[0]));
-                var screenSize = new Point(
-                    Int32.Parse(args[1]), Int32.Parse(args[2])
-                );
-                screen = new PixelDisplay(pixelSize, screenSize);
-            }
-            else
-            {
-                screen = new PixelDisplay(new Point(4), new Point(256, 128));
-            }
+            (var pixelSize, var screenSize) = args.Length == 3
+                ? (new Point(Int32.Parse(args[0])),
+                   new Point(Int32.Parse(args[1]), Int32.Parse(args[2])))
+                : (new Point(4), new Point(256, 128));
+
+            screen = new PixelDisplay(pixelSize, screenSize);
+
+            var drawAreaPos = new Point(256, 16);
+            var drawAreaSize = new Point(
+                (int)(screen.ScreenSize.X * 0.7),
+                screen.ScreenSize.Y - 40
+            );
+
+            drawArea = new Rectangle(
+                drawAreaPos.ToVector2(),
+                drawAreaSize.ToVector2()
+            );
+            drawArea.Color = Color.DarkBlue;
+            drawAreaBorder = new Rectangle(
+                (drawAreaPos - pixelSize).ToVector2(),
+                (drawAreaSize + new Point(2) * pixelSize).ToVector2()
+            );
+            drawAreaBorder.Color = Color.CornflowerBlue;
 
             input = new Input();
 
-            undoStack = new UndoStack<IRasterizable>(0xff);
+            undoStack = new UndoStack<List<Vertex>>(0xff);
             primedActions = new Queue<Action<PixelLinesApp>>(0xff);
         }
 
@@ -89,9 +101,6 @@ namespace Pipoga.Examples
 
             var radSliderSize = new Point(150, 50);
             var radSliderPos = radDecPos + new Point(0, radSize.Y + margin);
-
-            var drawAreaPos = new Point(250, 25);
-            var drawAreaSize = new Point(750, 450);
 
             var cursor = new Cursor(
                 defaultIcon: new CursorIcon(
@@ -164,7 +173,7 @@ namespace Pipoga.Examples
                         radSliderPos.ToVector2(),
                         radSliderSize.ToVector2()
                     ),
-                slideAxis: Vector2.UnitY
+                horizontalAxis: false
             );
             circleRadiusSlider.Value = 50;
 
@@ -195,13 +204,6 @@ namespace Pipoga.Examples
             gui.Add(radiusLabel);
 
             gui.Add(circleRadiusSlider);
-
-
-            drawArea = new Rectangle(
-                drawAreaPos.ToVector2(),
-                drawAreaSize.ToVector2()
-            );
-            drawArea.Color = Color.DarkGray;
         }
 
         protected override void Update(GameTime gameTime)
@@ -219,8 +221,6 @@ namespace Pipoga.Examples
 
             HandleInput();
 
-
-            UpdateLineBeingDrawn();
             UpdateUI();
 
             base.Update(gameTime);
@@ -248,15 +248,24 @@ namespace Pipoga.Examples
             }
 
             mouseOnScreen = screen.ToScreenPos(input.Mouse.position);
-            if (input.Mouse.m2WasDown)
+            if (drawArea.Contains(input.Mouse.position.ToVector2())
+                && input.Mouse.m2WasDown)
             {
-                undoStack.Push(
-                    new Circle(
+                var containedVertices = new List<Vertex>(new Circle(
                         circleRadiusSlider.Value,
                         input.Mouse.position.ToVector2()
                     )
+                    .GetVertices(screen.InversePixelSize)
+                    // TODO There's a lot of back and forth here...
+                    .Where(x => screen.ToScreenCoords(drawArea)
+                        .Contains(x.Position.ToPoint())
+                    )
                 );
+                // See comments on CheckStopLineDraw().
+                undoStack.Push(containedVertices);
             }
+
+            UpdateLineBeingDrawn();
         }
 
         /// <summary>
@@ -269,16 +278,12 @@ namespace Pipoga.Examples
                 lineDrawStart = mouseOnScreen;
             }
 
-            // Only mouse actions happening over the background-canvas are
-            // allowed.
-            if (!drawArea.Contains(input.Mouse.position.ToVector2()))
+            // Only mouse actions happening over the draw-area are allowed.
+            if (!drawArea.Contains(input.Mouse.position.ToVector2())
+                && !input.Mouse.m1IsDown)
             {
-                if (!input.Mouse.m1IsDown)
-                {
-                    // Line gets drawn if mouse is released outside.
-                    CheckStopLineDraw();
-                }
-                return;
+                // Line gets drawn if mouse is released outside.
+                CheckStopLineDraw();
             }
 
             if (input.Mouse.m1IsDown)
@@ -299,8 +304,19 @@ namespace Pipoga.Examples
         {
             if (lineBeingDrawn != null)
             {
-                // User has released, so save the line.
-                undoStack.Push(lineBeingDrawn);
+                var containedVertices = new List<Vertex>(
+                    lineBeingDrawn.GetVertices(screen.InversePixelSize)
+                        // TODO There's a lot of back and forth here...
+                        .Where(x => screen.ToScreenCoords(drawArea)
+                            .Contains(x.Position.ToPoint())
+                        )
+                );
+                if (containedVertices.Count != 0)
+                {
+                    // User has released and drawn something inside the
+                    // draw-area, so save the line.
+                    undoStack.Push(containedVertices);
+                }
 
                 lineBeingDrawn = null;
             }
@@ -319,7 +335,9 @@ namespace Pipoga.Examples
         {
             // Draw on the pixel-screen.
             screen.Clear();
+
             // Draw elements in order of layer bottom first.
+            screen.Plot(drawAreaBorder);
             screen.Plot(drawArea);
             foreach (var x in undoStack)
             {
@@ -327,7 +345,9 @@ namespace Pipoga.Examples
             }
             if (lineBeingDrawn != null)
             {
-                screen.Plot(lineBeingDrawn);
+                screen.Plot(
+                    lineBeingDrawn.GetVertices(screen.InversePixelSize)
+                );
             }
             screen.Plot(gui);
 

@@ -15,11 +15,19 @@ namespace Pipoga
         public int X { get; private set; }
         public int Y { get; private set; }
         public Color Color { get; set; }
+
         public Vertex(int x, int y, Color color)
         {
             X = x;
             Y = y;
             Color = color;
+        }
+
+        public Vector2 Position => new Vector2(X, Y);
+
+        public override string ToString()
+        {
+            return $"X:{X} Y:{Y}";
         }
     }
 

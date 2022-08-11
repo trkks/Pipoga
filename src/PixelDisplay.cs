@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -30,6 +31,7 @@ namespace Pipoga
                 PixelSize.Y * GridSize.Y
             );
         }
+        public Point Position { get; private set; }
 
         /// <summary>
         /// The size for the grid of pixels.
@@ -59,13 +61,14 @@ namespace Pipoga
 
         Color[] buffer;
 
-        public PixelDisplay(Point pixelSize, Point gridSize)
+        public PixelDisplay(Point pixelSize, Point gridSize, Point? position=null)
         {
             PixelSize = pixelSize;
             // Compute this here once to reduce divisions.
             InversePixelSize =
                 new Vector2(1f / (float)pixelSize.X, 1f / (float)pixelSize.Y);
             GridSize = gridSize;
+            Position = position ?? Point.Zero;
             this.buffer = new Color[GridSize.X * GridSize.Y];
         }
 
@@ -77,12 +80,11 @@ namespace Pipoga
         {
             for (int i = 0; i < buffer.Length; i++)
             {
-                Color color = buffer[i];
                 var location = new Vector2(
                     i % GridSize.X * PixelSize.X,
                     i / GridSize.X * PixelSize.Y
                 );
-
+                var color = buffer[i];
                 // TODO "Stretch" the pixel along the axises according to size
 
                 spriteBatch.Draw(
@@ -110,14 +112,35 @@ namespace Pipoga
                 && 0 <= y && y < GridSize.Y;
         }
 
+        public bool ScreenContains(Point point)
+        {
+            return Contains(point.X, point.Y);
+        }
+
+        public bool ScreenContains(int x, int y)
+        {
+            return Position.X <= x && x < (Position.X + GridSize.X)
+                && Position.Y <= y && y < (Position.Y + GridSize.Y);
+        }
+
         public void Plot<T>(T obj) where T : IRasterizable
         {
-            foreach (var vertex in obj.GetVertices(InversePixelSize))
+            Plot(obj.GetVertices(InversePixelSize));
+        }
+
+        public void Plot(IEnumerable<Vertex> xs)
+        {
+            foreach (var vertex in xs)
             {
-                if (Contains(vertex.X, vertex.Y))
-                {
-                    this[vertex.X, vertex.Y] = vertex.Color;
-                }
+                Plot(vertex);
+            }
+        }
+
+        public void Plot(Vertex vertex)
+        {
+            if (Contains(vertex.X, vertex.Y))
+            {
+                this[vertex.X, vertex.Y] = vertex.Color;
             }
         }
 

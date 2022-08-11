@@ -70,7 +70,12 @@ namespace Pipoga
 
         public bool Contains(Vector2 p)
         {
-            return X <= p.X && Y <= p.Y && p.X <= X + W && p.Y <= Y + H;
+            return Contains(p.X, p.Y);
+        }
+
+        public bool Contains(float x, float y)
+        {
+            return X <= x && Y <= y && x <= X + W && y <= Y + H;
         }
 
         public IEnumerable<Vertex> GetVertices(Vector2 inversePixelSize)
