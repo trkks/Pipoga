@@ -173,7 +173,7 @@ namespace Pipoga.Examples
                         radSliderPos.ToVector2(),
                         radSliderSize.ToVector2()
                     ),
-                horizontalAxis: false
+                slideAxis: Vector2.UnitY
             );
             circleRadiusSlider.Value = 50;
 
