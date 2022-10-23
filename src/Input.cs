@@ -78,6 +78,9 @@ namespace Pipoga
             _observers = new List<IObserver<Input>>(0xff);
         }
 
+        // TODO Make this work like SDL which apparently creates some queue of
+        // __all__ events every frame for the caller to process -> `while
+        // match` instead of `if else`.
         public void Update()
         {
             _keyboardState = Keyboard.GetState();

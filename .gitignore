@@ -5,3 +5,6 @@ obj/
 Content/
 .vs
 .config
+*.ch8
+.mgstats
+Properties/
