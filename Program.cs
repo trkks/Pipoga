@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 
+using Microsoft.Xna.Framework;
+
 // Apparently C# `args` do not include the executable name?
 if (args.Length > 0)
 {

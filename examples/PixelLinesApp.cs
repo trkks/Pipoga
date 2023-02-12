@@ -184,8 +184,13 @@ namespace Pipoga.Examples
                 radLabelPos,
                 Color.White
             );
+            // Use some OS-font until a custom one is made...
+            //FIXME
+            //radiusLabel.Font = Content.Load<SpriteFont>("Font");
+            //gui.Add(radiusLabel);
+            /*
             // TODO Make this SpriteFont a constant of Gui-class.
-            radiusLabel.Font = new SpriteFont(
+            new SpriteFont(
                 texture: Content.Load<Texture2D>("FontAscii"),
                 glyphBounds: Enumerable.Range(0, 10)
                     .Select(i => new XnaRect(i * 10, 0, 10, 10))
@@ -201,7 +206,7 @@ namespace Pipoga.Examples
                     .ToList(),
                 defaultCharacter: '0'
             );
-            gui.Add(radiusLabel);
+            */
 
             gui.Add(circleRadiusSlider);
         }

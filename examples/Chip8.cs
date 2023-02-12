@@ -3,6 +3,8 @@ using System.IO;
 using System.Linq;
 
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Graphics;
 
 using Pipoga;
 
@@ -121,7 +123,7 @@ namespace Pipoga.Examples
             * |A|0|B|F|    |Z|X|C|V|
             * +-+-+-+-+    +-+-+-+-+
             */
-            
+
             emu.keypad[0x1] = (byte)(input.IsKeyDown(Keys.NumPad1) ? 1 : 0);
             emu.keypad[0x2] = (byte)(input.IsKeyDown(Keys.NumPad2) ? 1 : 0);
             emu.keypad[0x3] = (byte)(input.IsKeyDown(Keys.NumPad3) ? 1 : 0);
