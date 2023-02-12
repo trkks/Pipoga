@@ -2,7 +2,6 @@
 *.txt
 bin/
 obj/
-Content/
 .vs
 .config
 *.ch8
